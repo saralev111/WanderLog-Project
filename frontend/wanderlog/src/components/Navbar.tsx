@@ -1,4 +1,3 @@
-// src/components/Navbar.tsx
 import React from 'react';
 import { AppBar, Toolbar, Typography, Button, Box, IconButton } from '@mui/material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
@@ -9,8 +8,10 @@ import ExploreIcon from '@mui/icons-material/Explore';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
 export default function Navbar() {
-  // קריאת מצב ההתחברות מתוך ה-Redux
+  // קריאת מצב ההתחברות ושם המשתמש מתוך ה-Redux המשודרג שלנו
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const username = useSelector((state: RootState) => state.auth.username); // התוספת החדשה!
+  
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -24,7 +25,7 @@ export default function Navbar() {
       position="sticky" 
       elevation={0} // סרגל שטוח ללא צל כבד כדי לשמור על מראה "נייר"
       sx={{ 
-        backgroundColor: '#F3EFE6', // צבע הקרם שלנו
+        backgroundColor: '#F3EFE6', // צבע הקרם שלכן
         borderBottom: '1px solid rgba(140, 125, 111, 0.2)',
         color: '#3A312A'
       }}
@@ -51,7 +52,7 @@ export default function Navbar() {
           <Button component={RouterLink} to="/explore" color="inherit" sx={{ fontSize: '1rem', fontWeight: 'normal' }}>
             כל הטיולים
           </Button>
-          {/* הכפתור הזה יוביל לתכנון מסלול (דף שניצור בהמשך) */}
+          {/* הכפתור הזה יוביל לתכנון מסלול */}
           <Button component={RouterLink} to="/plan" color="inherit" sx={{ fontSize: '1rem', fontWeight: 'normal' }}>
             תכנון טיול חדש
           </Button>
@@ -63,14 +64,37 @@ export default function Navbar() {
             // תפריט למשתמש מחובר
             <>
               <Button component={RouterLink} to="/dashboard" color="primary" sx={{ fontWeight: 'bold' }}>
-                האזור האישי
+                יומני המסע שלי
               </Button>
               <Button onClick={handleLogout} sx={{ color: 'text.secondary' }}>
                 התנתקות
               </Button>
-              <IconButton component={RouterLink} to="/dashboard" sx={{ color: 'primary.main' }}>
-                <AccountCircleIcon />
-              </IconButton>
+              
+              {/* אלמנט מעוצב שמציג את שם המשתמש המחובר ומקשר לעמוד הפרופיל */}
+              <Box 
+                component={RouterLink} 
+                to="/profile" 
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  textDecoration: 'none', 
+                  color: '#532E15', 
+                  gap: 0.5,
+                  ml: 1,
+                  p: '4px 8px',
+                  borderRadius: '20px',
+                  backgroundColor: 'rgba(140, 125, 111, 0.1)', // רקע בהיר עדין מסביב לשם
+                  '&:hover': { backgroundColor: 'rgba(140, 125, 111, 0.2)' 
+                  }
+                }}
+              >
+                <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                  {username || 'מטייל'}
+                </Typography>
+                <IconButton size="small" sx={{ color: '#305031', p: 0 }}>
+                  <AccountCircleIcon />
+                </IconButton>
+              </Box>
             </>
           ) : (
             // תפריט לאורח

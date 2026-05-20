@@ -5,6 +5,8 @@ import Navbar from './components/Navbar';
 import { Box } from '@mui/material';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Dashboard from './pages/Dashboard';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -24,10 +26,10 @@ function App() {
             {/* נתיבי התחברות והרשמה */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/profile" element={<Profile />} />
             {/* נתיבים עתידיים שניצור:
             <Route path="/explore" element={<Explore />} />
-            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/plan" element={<PlanTrip />} />
             */}
           </Routes>
