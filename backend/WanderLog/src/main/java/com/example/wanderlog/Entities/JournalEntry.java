@@ -52,7 +52,7 @@ public class JournalEntry {
     @JoinColumn(name="user_id",nullable = false)
     private User user;
 
-    @ManyToOne
+    @ManyToOne(cascade = jakarta.persistence.CascadeType.ALL)
     @JoinColumn(name = "location_id",nullable = false)
     private Location location;
 }

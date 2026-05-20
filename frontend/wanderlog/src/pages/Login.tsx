@@ -15,10 +15,19 @@ export default function Login() {
 
   const onSubmit = async (data: any) => {
     try {
+      // 1. התשובה מהשרת נשמרת במשתנה "result"
       const result = await loginUser({ userName: data.userName, password: data.password }).unwrap();
-      dispatch(setCredentials({ token: result.token }));
+
+      // 2. לכן אנחנו צריכים לשלוף את הטוקן מתוך "result"
+      dispatch(setCredentials({ 
+        token: result.token, 
+        username: data.userName // כאן שמנו N גדולה, בדיוק כמו השם של השדה בטופס
+      }));
+
       alert('התחברת בהצלחה!');
-      // navigate('/dashboard'); 
+      // הורדתי כאן את ההערה כדי שהמשתמש באמת יעבור אוטומטית ללוח הבקרה שלך אחרי התחברות מוצלחת!
+      navigate('/dashboard'); 
+      
     } catch (err) {
       console.error('Login failed:', err);
     }
