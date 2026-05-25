@@ -1,26 +1,44 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from '@reduxjs/toolkit/query'; 
 import type { RootState } from '../../features/store';
+import { logout } from '../../features/authSlice'; 
+
+const baseQuery = fetchBaseQuery({
+  baseUrl: 'http://localhost:9090/journals', 
+  prepareHeaders: (headers, { getState }) => {
+    const token = (getState() as RootState).auth.token;
+    if (token) {
+      headers.set('authorization', `Bearer ${token}`);
+    }
+    return headers;
+  },
+});
+
+const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
+  args,
+  api,
+  extraOptions
+) => {
+  // קודם כל, מוציאים את הבקשה לשרת כרגיל
+  let result = await baseQuery(args, api, extraOptions);
+
+  // בודקים אם יש שגיאה, ואם הקוד שלה הוא 401
+  if (result.error && result.error.status === 401) {
+    // השרת אמר שהטוקן פג תוקף! מפעילים מיד את פקודת ההתנתקות
+    api.dispatch(logout());
+  }
+  return result;
+};
 
 export const journalApi = createApi({
   reducerPath: 'journalApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl: 'http://localhost:9090/journals', 
-    prepareHeaders: (headers, { getState }) => {
-      const token = (getState() as RootState).auth.token;
-      if (token) {
-        headers.set('authorization', `Bearer ${token}`);
-      }
-      return headers;
-    },
-  }),
+  baseQuery: baseQueryWithReauth, 
   
-  // 1. הגדרת סוג תג חדש במערכת ה-API
   tagTypes: ['Journals'],
   
   endpoints: (builder) => ({
     getMyEntries: builder.query({
       query: () => '/my-entries',
-      // 2. אומרים שהקריאה הזו "משגיחה" על תג Journals
       providesTags: ['Journals'], 
     }),
     
@@ -38,42 +56,41 @@ export const journalApi = createApi({
         method: 'POST',
         body: newEntry,
       }),
-      // 3. הקסם: ברגע ששומרים יומן חדש, אנחנו "שוברים" את תג Journals הישן ומכריחים את המערכת להתרענן בלייב!
       invalidatesTags: ['Journals'], 
     }),
+    
     searchByCountry: builder.query({
       query: (country: string) => `/search/country?country=${country}`,
       providesTags: ['Journals'],
     }),
 
-    // חיפוש לפי דירוג (מציג את כל הטיולים מהדירוג הזה ומעלה)
     searchByRating: builder.query({
       query: (minRating: number) => `/search/rating?minRating=${minRating}`,
       providesTags: ['Journals'],
     }),
 
-    // חיפוש חופשי בכותרת או בתיאור
     searchByKeyword: builder.query({
       query: (keyword: string) => `/search/keyword?q=${keyword}`,
       providesTags: ['Journals'],
     }),
-    // עדכון יומן מסע קיים
+    
     updateEntry: builder.mutation({
       query: ({ id, updatedEntry }) => ({
         url: `/${id}`,
         method: 'PUT',
         body: updatedEntry,
       }),
-      invalidatesTags: ['Journals'], // מרענן אוטומטית את ה-Dashboard לאחר העדכון!
+      invalidatesTags: ['Journals'],
     }),
   }),
-  
 });
 
-export const { useGetMyEntriesQuery,
-   useGetPublicEntriesQuery,
-    useCreateEntryMutation,
-    useUpdateEntryMutation,
-    useSearchByCountryQuery, // התווסף
-    useSearchByRatingQuery,  // התווסף
-    useSearchByKeywordQuery,  } = journalApi;
+export const { 
+  useGetMyEntriesQuery,
+  useGetPublicEntriesQuery,
+  useCreateEntryMutation,
+  useUpdateEntryMutation,
+  useSearchByCountryQuery,
+  useSearchByRatingQuery,
+  useSearchByKeywordQuery 
+} = journalApi;
