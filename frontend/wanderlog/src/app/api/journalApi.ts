@@ -82,6 +82,14 @@ export const journalApi = createApi({
       }),
       invalidatesTags: ['Journals'],
     }),
+    optimizeRoute: builder.mutation({
+      query: (places) => ({
+        url: '/optimize-route',
+        method: 'POST',
+        body: places,
+      }),
+    }),
+    
   }),
 });
 
@@ -92,5 +100,6 @@ export const {
   useUpdateEntryMutation,
   useSearchByCountryQuery,
   useSearchByRatingQuery,
-  useSearchByKeywordQuery 
+  useSearchByKeywordQuery,
+  useOptimizeRouteMutation,
 } = journalApi;
