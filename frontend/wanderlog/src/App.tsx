@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminPanel from './pages/AdminPanel';
+import RoutePlanner from './pages/RoutePlanner';
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
+            <Route path="/plan" element={<ProtectedRoute><RoutePlanner /></ProtectedRoute>} />
             {/* נתיבים עתידיים שניצור:
             <Route path="/explore" element={<Explore />} />
             <Route path="/plan" element={<PlanTrip />} />
