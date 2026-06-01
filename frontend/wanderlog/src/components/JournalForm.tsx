@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { useCreateEntryMutation, useCreateEntryWithImageMutation, useUpdateEntryMutation } from '../app/api/journalApi';
-import { TextField, Button, Box, Typography, Rating, FormControl, InputLabel, Select, MenuItem, FormHelperText, Autocomplete } from '@mui/material';
+import { TextField, Button, Box, Typography, Rating, FormControl, InputLabel, Select, MenuItem, Switch, FormControlLabel } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import MapSelector from './MapSelector';
 
 interface JournalFormInputs {
   title: string;
@@ -11,6 +12,9 @@ interface JournalFormInputs {
   rating: number;
   status: 'VISITED' | 'WISHLIST';
   country: string; 
+  latitude?: number;  
+  longitude?: number; 
+  isPublic: boolean; // <--- הוספנו את השדה החדש!
 }
 
 interface JournalFormProps {
@@ -20,15 +24,12 @@ interface JournalFormProps {
 
 const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
   const { register, handleSubmit, control, formState: { errors }, reset, setValue } = useForm<JournalFormInputs>({
-    defaultValues: { title: '', description: '', country: '', date: new Date().toISOString().split('T')[0], rating: 5, status: 'VISITED' }
+    // ברירת המחדל היא שהיומן פרטי (false)
+    defaultValues: { title: '', description: '', country: '', date: new Date().toISOString().split('T')[0], rating: 5, status: 'VISITED', isPublic: false }
   });
 
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   
-  // נתונים עבור החיפוש החינמי של OpenStreetMap
-  const [options, setOptions] = useState<any[]>([]);
-  const [osmLocationData, setOsmLocationData] = useState<any>(null);
-
   const [createEntry, { isLoading: isCreating }] = useCreateEntryMutation();
   const [createEntryWithImage, { isLoading: isCreatingWithImage }] = useCreateEntryWithImageMutation();
   const [updateEntry, { isLoading: isUpdating }] = useUpdateEntryMutation();
@@ -37,48 +38,22 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
 
   useEffect(() => {
     if (editData) {
-      reset({ ...editData, status: editData.status as 'VISITED' | 'WISHLIST' });
-      if (editData.location) setOsmLocationData(editData.location);
+      reset({ 
+        ...editData, 
+        status: editData.status as 'VISITED' | 'WISHLIST',
+        latitude: editData.location?.latitude,
+        longitude: editData.location?.longitude,
+        isPublic: editData.isPublic ?? false // <--- שולפים את המצב הקיים בעריכה
+      });
       setSelectedImage(null);
     } else {
-      reset({ title: '', description: '', country: '', date: new Date().toISOString().split('T')[0], rating: 5, status: 'VISITED' });
-      setOsmLocationData(null);
+      reset({ 
+        title: '', description: '', country: '', date: new Date().toISOString().split('T')[0], 
+        rating: 5, status: 'VISITED', latitude: undefined, longitude: undefined, isPublic: false 
+      });
       setSelectedImage(null);
     }
   }, [editData, reset]);
-
-  // פונקציה שעושה חיפוש ברשת של OpenStreetMap (חינם לגמרי!)
-// פונקציה משודרגת שעושה חיפוש ברשת של OpenStreetMap
-const searchOSM = async (query: string) => {
-  if (query.length < 3) return;
-  try {
-    // שיפורים: 
-    // 1. limit=15 (מביא 15 תוצאות במקום 5)
-    // 2. accept-language=he,en (נותן עדיפות ברורה לתוצאות בעברית ובאנגלית)
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=15&accept-language=he,en`);
-    const data = await res.json();
-    setOptions(data);
-  } catch (err) {
-    console.error('שגיאה בחיפוש מיקום:', err);
-  }
-};
-
-  const handleSelectPlace = (event: any, place: any) => {
-    if (place) {
-      const addressParts = place.display_name.split(',');
-      const countryName = addressParts[addressParts.length - 1].trim();
-
-      setOsmLocationData({
-        name: place.name || addressParts[0],
-        address: place.display_name,
-        country: countryName,
-        latitude: parseFloat(place.lat),
-        longitude: parseFloat(place.lon),
-        googlePlaceId: `osm-${place.place_id}`
-      });
-      setValue('country', place.name || addressParts[0]); 
-    }
-  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) setSelectedImage(e.target.files[0]);
@@ -86,14 +61,23 @@ const searchOSM = async (query: string) => {
 
   const onSubmit = async (data: JournalFormInputs) => {
     try {
-      const finalLocation = osmLocationData || {
-        country: data.country, name: data.country, address: data.country,
-        latitude: 0, longitude: 0, googlePlaceId: editData?.location?.googlePlaceId || `temp-id-${Date.now()}`
+      const finalLocation = {
+        country: data.country, 
+        name: data.country, 
+        address: data.country,
+        latitude: data.latitude || 0, 
+        longitude: data.longitude || 0, 
+        googlePlaceId: editData?.location?.googlePlaceId || `temp-id-${Date.now()}`
       };
 
       const entryDataForServer = {
-        title: data.title, description: data.description, date: data.date,
-        rating: data.rating, status: data.status, location: finalLocation 
+        title: data.title, 
+        description: data.description, 
+        date: data.date,
+        rating: data.rating, 
+        status: data.status, 
+        isPublic: data.isPublic, // <--- שולחים את הבחירה לשרת ה-Java!
+        location: finalLocation 
       };
 
       if (isEditMode && editData) {
@@ -112,7 +96,6 @@ const searchOSM = async (query: string) => {
         alert('יומן המסע נשמר בהצלחה בבסיס הנתונים!');
       }
       reset();
-      setOsmLocationData(null);
       setSelectedImage(null);
     } catch (error) {
       console.error('שגיאה בשמירת הנתונים:', error);
@@ -130,23 +113,7 @@ const searchOSM = async (query: string) => {
 
       <TextField label="כותרת הטיול" variant="outlined" fullWidth {...register('title', { required: 'חובה להזין כותרת' })} error={!!errors.title} helperText={errors.title?.message} />
 
-      {/* השלמה אוטומטית חינמית! */}
-      <Autocomplete
-        options={options}
-        getOptionLabel={(option) => option.display_name}
-        onInputChange={(event, newInputValue) => searchOSM(newInputValue)}
-        onChange={handleSelectPlace}
-        renderInput={(params) => (
-          <TextField 
-            {...params} 
-            label="חיפוש יעד חכם (חינם)" 
-            variant="outlined" 
-            {...register('country', { required: 'חובה לבחור יעד' })} 
-            error={!!errors.country} 
-            helperText={errors.country?.message || "הקלידי שם של מקום ובחרי מהרשימה שתפתח"} 
-          />
-        )}
-      />
+      <TextField label="מדינה / עיר (שם כללי)" variant="outlined" fullWidth {...register('country', { required: 'חובה להזין את שם היעד' })} error={!!errors.country} helperText={errors.country?.message} />
 
       <TextField label="תאריך הטיול" type="date" variant="outlined" fullWidth slotProps={{ inputLabel: { shrink: true } }} {...register('date', { required: 'חובה לבחור תאריך' })} error={!!errors.date} helperText={errors.date?.message} />
 
@@ -167,6 +134,43 @@ const searchOSM = async (query: string) => {
           )} />
       </Box>
 
+      {/* --- התוספת החדשה: מתג יומן ציבורי/פרטי --- */}
+      <Box sx={{ p: 1, border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#f9f9f9' }}>
+        <Controller
+          name="isPublic"
+          control={control}
+          render={({ field }) => (
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={field.value}
+                  onChange={(e) => field.onChange(e.target.checked)}
+                  color="primary"
+                />
+              }
+              // הטקסט משתנה באופן דינמי בהתאם לבחירה של המשתמש!
+              label={
+                <Typography sx={{ fontWeight: field.value ? 'bold' : 'normal', color: field.value ? '#1976d2' : '#666' }}>
+                  {field.value ? "🌍 יומן ציבורי (גלוי לכולם)" : "🔒 יומן פרטי (רק אני רואה)"}
+                </Typography>
+              }
+            />
+          )}
+        />
+      </Box>
+
+      <Box sx={{ p: 1, border: '1px solid #ccc', borderRadius: '4px' }}>
+        <Typography variant="subtitle2" sx={{ mb: 1, color: '#666' }}>בחרי מיקום מדויק על המפה (חיפוש או לחיצה):</Typography>
+        <MapSelector 
+          onLocationSelect={(lat, lng) => {
+            setValue('latitude', lat);
+            setValue('longitude', lng);
+          }} 
+          defaultLat={editData?.location?.latitude} 
+          defaultLng={editData?.location?.longitude}
+        />
+      </Box>
+
       <TextField label="ספרי על החוויות שלך מהטיול..." variant="outlined" multiline rows={4} fullWidth {...register('description')} />
 
       {!isEditMode && (
@@ -180,7 +184,7 @@ const searchOSM = async (query: string) => {
       )}
 
       <Box sx={{ display: 'flex', gap: 2 }}>
-        <Button type="submit" variant="contained" size="large" fullWidth disabled={isSubmitting} sx={{ backgroundColor: isEditMode ? '#cca010' : '#305031', fontWeight: 'bold' }}>
+        <Button type="submit" variant="contained" size="large" fullWidth disabled={isSubmitting} sx={{ backgroundColor: isEditMode ? '#cca010' : '#305031', '&:hover': { backgroundColor: isEditMode ? '#b08a0e' : '#437045' }, fontWeight: 'bold' }}>
           {isSubmitting ? 'שומר...' : isEditMode ? 'עדכן יומן מסע' : 'שמור יומן מסע'}
         </Button>
         {isEditMode && <Button variant="outlined" color="secondary" onClick={onCancelEdit}>ביטול</Button>}
