@@ -14,4 +14,5 @@ public class JournalEntryDTO {
     private Integer visitOrder;
     private UserDTO user;      // משתמש ב-DTO ולא ב-Entity!
     private LocationDTO location; // משתמש ב-DTO ולא ב-Entity!
+    private String imageUrl;
 }

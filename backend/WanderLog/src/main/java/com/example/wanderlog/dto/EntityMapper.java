@@ -37,7 +37,7 @@ public class EntityMapper {
         dto.setDate(entry.getDate());
         dto.setRating(entry.getRating());
         dto.setStatus(entry.getStatus().name());
-
+        dto.setImageUrl(entry.getImageUrl());
         // כאן הקסם קורה - אנחנו ממירים גם את האובייקטים הפנימיים
         dto.setUser(toDTO(entry.getUser()));
         dto.setLocation(toDTO(entry.getLocation()));

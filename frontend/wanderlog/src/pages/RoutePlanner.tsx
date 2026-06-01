@@ -1,23 +1,44 @@
-// src/pages/RoutePlanner.tsx
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Button, Paper, List, ListItem, ListItemText, Divider, CircularProgress } from '@mui/material';
 import { useOptimizeRouteMutation, useGetMyEntriesQuery } from '../app/api/journalApi';
+// --- הספריות החדשות והחינמיות ---
+import { MapContainer, TileLayer, Marker, Polyline } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// תיקון קטן לאייקונים של המפה כדי שיוצגו נכון ב-React
+const DefaultIcon = L.icon({
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41]
+});
+L.Marker.prototype.options.icon = DefaultIcon;
+
+const defaultCenter: [number, number] = [48.8566, 2.3522]; // פריז כברירת מחדל
 
 export default function RoutePlanner() {
-  // 1. הבאנו את שתי הפונקציות: אחת שעושה אופטימיזציה, ואחת שמביאה את היומנים שלך מהשרת
   const [optimizeRoute, { isLoading: isOptimizing }] = useOptimizeRouteMutation();
   const { data: myEntriesData, isLoading: isEntriesLoading } = useGetMyEntriesQuery(undefined);
   
-  // 2. הרשימה עכשיו מתחילה כרשימה ריקה! אין יותר נתוני דמה.
   const [places, setPlaces] = useState<any[]>([]);
 
-  // 3. הקסם: ברגע שהשרת מחזיר לנו את היומנים האמיתיים שלך, אנחנו מכניסים אותם לרשימה
+  // נקודות דמה במקרה ולמשתמש אין קואורדינטות בשרת
+  const mockCoordinates = [
+    { lat: 48.8566, lng: 2.3522 },
+    { lat: 51.5074, lng: -0.1278 },
+    { lat: 41.9028, lng: 12.4964 },
+    { lat: 52.5200, lng: 13.4050 },
+  ];
+
   useEffect(() => {
     if (myEntriesData && myEntriesData.content) {
-      const realPlaces = myEntriesData.content.map((entry: any) => ({
+      const realPlaces = myEntriesData.content.map((entry: any, index: number) => ({
         id: entry.id,
         name: entry.title || 'יעד ללא שם',
-        visitOrder: entry.visitOrder || 0
+        visitOrder: entry.visitOrder || 0,
+        lat: entry.location?.latitude || mockCoordinates[index % mockCoordinates.length].lat,
+        lng: entry.location?.longitude || mockCoordinates[index % mockCoordinates.length].lng,
       }));
       setPlaces(realPlaces);
     }
@@ -25,78 +46,61 @@ export default function RoutePlanner() {
 
   const handleOptimize = async () => {
     try {
-      // אם הרשימה ריקה (למשתמש אין יומנים), אין מה לשלוח לשרת
-      if (places.length === 0) {
-        alert("אין לך עדיין יעדים לתכנון!");
-        return;
-      }
-
-      // שולפים רק את מספרי ה-ID
-      const extractedIds = places.map(place => place.id);
-
-      const payload = {
-        fixedEntryIds: [],
-        flexibleEntryIds: extractedIds
-      };
-
-      // שולחים לשרת
+      if (places.length === 0) return alert("אין לך עדיין יעדים לתכנון!");
+      const payload = { fixedEntryIds: [], flexibleEntryIds: places.map(p => p.id) };
       const optimizedEntries = await optimizeRoute(payload).unwrap();
       
-      if (!optimizedEntries || optimizedEntries.length === 0) {
-        alert("אופס! השרת החזיר רשימה ריקה.");
-        return;
-      }
+      if (!optimizedEntries || optimizedEntries.length === 0) return;
       
-      // מיון לפי המספר החדש שהשרת נתן
       const sortedEntries = [...optimizedEntries].sort((a: any, b: any) => a.visitOrder - b.visitOrder);
-      
-      // התאמה לתצוגה
       const mappedPlaces = sortedEntries.map((entry: any) => ({
         id: entry.id,
         name: entry.title || 'יעד ללא שם', 
-        visitOrder: entry.visitOrder
+        visitOrder: entry.visitOrder,
+        lat: places.find(p => p.id === entry.id)?.lat,
+        lng: places.find(p => p.id === entry.id)?.lng,
       }));
 
-      // עדכון המסך!
       setPlaces(mappedPlaces);
-      
     } catch (err) {
-      console.error("שגיאה באופטימיזציה של המסלול:", err);
+      console.error("שגיאה באופטימיזציה:", err);
       alert("שגיאה בתקשורת מול השרת.");
     }
   };
 
+  // הכנת מערך הנקודות לקו שמחבר אותן
+  const pathCoordinates: [number, number][] = places.map(place => [place.lat, place.lng]);
+
   return (
-    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, minHeight: '80vh', p: 4, gap: 4, maxWidth: 1200, mx: 'auto' }}>
+    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, minHeight: '85vh', p: 4, gap: 4, maxWidth: 1400, mx: 'auto' }}>
       
-      {/* צד ימין: רשימת המקומות */}
-      <Box sx={{ flex: 1 }}>
-        <Paper elevation={0} sx={{ p: 4, borderRadius: 3, height: '100%', border: '1px solid #e0e0e0', backgroundColor: '#FCFBF8' }}>
-          <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold', color: '#305031', borderBottom: '3px solid #cca010', display: 'inline-block', pb: 1 }}>
-            היעדים שלי לטיול
+      {/* צד ימין: הרשימה והכפתורים */}
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <Paper elevation={2} sx={{ p: 3, borderRadius: 3, backgroundColor: '#fff', textAlign: 'center' }}>
+          <Typography variant="h4" sx={{ mb: 1, fontWeight: 'bold', color: '#2E4835' }}>תכנון חכם</Typography>
+          <Typography variant="body1" sx={{ mb: 3, color: '#5C5850' }}>תנו לאלגוריתם לסדר את המסלול שלכם.</Typography>
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+            <Button variant="contained" size="large" disabled={isOptimizing || places.length === 0} onClick={handleOptimize} sx={{ backgroundColor: '#305031', borderRadius: '30px' }}>
+              {isOptimizing ? <CircularProgress size={24} color="inherit" /> : '✨ אופטימיזציית מסלול'}
+            </Button>
+          </Box>
+        </Paper>
+
+        <Paper elevation={0} sx={{ p: 3, borderRadius: 3, flex: 1, border: '1px solid #e0e0e0', backgroundColor: '#FCFBF8', overflowY: 'auto' }}>
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold', color: '#305031', borderBottom: '2px solid #cca010', display: 'inline-block', pb: 0.5 }}>
+            סדר הביקור ביעדים:
           </Typography>
-          
-          {/* מציגים טעינה בזמן שהיומנים יורדים מהשרת, או הודעה אם אין יומנים */}
           {isEntriesLoading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-              <CircularProgress color="primary" />
-            </Box>
+            <CircularProgress color="primary" sx={{ display: 'block', mx: 'auto', mt: 4 }} />
           ) : places.length === 0 ? (
-            <Typography sx={{ textAlign: 'center', mt: 4, color: '#5C5850' }}>
-              אין לך עדיין יומנים במערכת. הוסיפי כמה באזור האישי שלך ואז חיזרי לכאן!
-            </Typography>
+            <Typography sx={{ textAlign: 'center', mt: 4 }}>אין לך עדיין יומנים.</Typography>
           ) : (
             <List>
               {places.map((place, index) => (
                 <React.Fragment key={place.id}>
-                  <ListItem sx={{ py: 2.5 }}>
-                    <Typography variant="h5" sx={{ mr: 2, color: '#cca010', fontWeight: 'bold' }}>
-                      {index + 1}.
-                    </Typography>
-                    <ListItemText 
-                      primary={<Typography sx={{ fontWeight: 'bold', fontSize: '1.2rem', color: '#333' }}>{place.name}</Typography>} 
-                      secondary={`מזהה מערכת למיון: ${place.visitOrder}`} 
-                    />
+                  <ListItem>
+                    <Typography variant="h6" sx={{ mr: 2, color: '#cca010', fontWeight: 'bold' }}>{index + 1}.</Typography>
+                    <ListItemText primary={<Typography sx={{ fontWeight: 'bold' }}>{place.name}</Typography>} />
                   </ListItem>
                   {index < places.length - 1 && <Divider />}
                 </React.Fragment>
@@ -106,42 +110,29 @@ export default function RoutePlanner() {
         </Paper>
       </Box>
 
-      {/* צד שמאל: אזור הפעולות */}
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', p: 4 }}>
-        <Typography variant="h3" sx={{ mb: 2, textAlign: 'center', fontFamily: '"Lora", serif', fontWeight: 'bold', color: '#2E4835' }}>
-          תכנון חכם
-        </Typography>
-        <Typography variant="h6" sx={{ mb: 6, textAlign: 'center', color: '#5C5850', maxWidth: '80%' }}>
-          תנו לאלגוריתם שלנו לסדר לכם את סדר הביקור ההגיוני ביותר בין היעדים שבחרתם.
-        </Typography>
-        
-        <Button 
-          variant="contained" 
-          size="large"
-          disabled={isOptimizing || places.length === 0}
-          onClick={handleOptimize}
-          sx={{ 
-            mb: 3, py: 2, px: 5, fontSize: '1.3rem', 
-            backgroundColor: '#305031', 
-            borderRadius: '30px',
-            boxShadow: '0 8px 20px rgba(48, 80, 49, 0.3)',
-            '&:hover': { backgroundColor: '#233d24' }
-          }}
+      {/* צד שמאל: מפת OpenStreetMap חינמית! */}
+      <Box sx={{ flex: 1.5, borderRadius: '12px', overflow: 'hidden', boxShadow: '0px 4px 12px rgba(0,0,0,0.1)', minHeight: '500px' }}>
+        <MapContainer 
+          center={places.length > 0 ? [places[0].lat, places[0].lng] : defaultCenter} 
+          zoom={5} 
+          style={{ height: '100%', width: '100%' }}
         >
-          {isOptimizing ? <CircularProgress size={28} color="inherit" /> : '✨ הפעל אופטימיזציית מסלול'}
-        </Button>
+          {/* ה"אריחים" שמציירים את המפה בפועל */}
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          />
+          
+          {/* ציור הנקודות על המפה */}
+          {places.map((place, index) => (
+            <Marker key={place.id} position={[place.lat, place.lng]} />
+          ))}
 
-        <Button 
-          variant="outlined" 
-          size="large"
-          sx={{ 
-            py: 1.5, px: 4, fontSize: '1.1rem', 
-            color: '#532E15', borderColor: '#532E15', borderRadius: '30px',
-            '&:hover': { backgroundColor: 'rgba(83, 46, 21, 0.05)' }
-          }}
-        >
-          🤖 עצת AI ליעדים (בקרוב)
-        </Button>
+          {/* ציור הקו המחבר */}
+          {places.length > 1 && (
+            <Polyline positions={pathCoordinates} pathOptions={{ color: '#cca010', weight: 4 }} />
+          )}
+        </MapContainer>
       </Box>
 
     </Box>

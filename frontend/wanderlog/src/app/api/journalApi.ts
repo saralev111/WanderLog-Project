@@ -89,6 +89,15 @@ export const journalApi = createApi({
         body: places,
       }),
     }),
+    createEntryWithImage: builder.mutation({
+      query: (formData: FormData) => ({
+        url: '/with-image', // פונה לנתיב המיוחד בשרת שמטפל בתמונות
+        method: 'POST',
+        body: formData,
+        // שימו לב: כששולחים FormData, אין צורך להגדיר Content-Type! הדפדפן עושה את זה אוטומטית.
+      }),
+      invalidatesTags: ['Journals'], 
+    }),
     
   }),
 });
@@ -98,6 +107,7 @@ export const {
   useGetPublicEntriesQuery,
   useCreateEntryMutation,
   useUpdateEntryMutation,
+  useCreateEntryWithImageMutation,
   useSearchByCountryQuery,
   useSearchByRatingQuery,
   useSearchByKeywordQuery,

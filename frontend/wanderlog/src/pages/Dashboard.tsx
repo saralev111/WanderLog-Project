@@ -104,18 +104,40 @@ const Dashboard = () => {
               
               <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
                 {groupedEntries[country].map((entry: any) => (
-                  <li key={entry.id} style={{ padding: '14px 0', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Box sx={{ pr: 2 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#333' }}>
-                        {entry.title || 'טיול ללא כותרת'}
-                      </Typography>
-                      {entry.description && (
-                        <Typography variant="body2" color="textSecondary" sx={{ mt: 0.5, whiteSpace: 'pre-line' }}>
-                          {entry.description}
-                        </Typography>
+                  <li key={entry.id} style={{ padding: '14px 0', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    
+                    {/* צד ימין של השורה: התמונה + הטקסט */}
+                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flex: 1, pr: 2 }}>
+                      
+                      {/* --- הוספת התמונה --- */}
+                      {entry.imageUrl ? (
+                        <Box
+                          component="img"
+                          src={`http://localhost:9090${entry.imageUrl}`}
+                          alt={entry.title}
+                          sx={{ width: 80, height: 80, objectFit: 'cover', borderRadius: '8px', flexShrink: 0 }}
+                        />
+                      ) : (
+                        // מקום ריק מעוצב במקרה שאין תמונה לטיול
+                        <Box sx={{ width: 80, height: 80, backgroundColor: '#f0f0f0', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <Typography variant="caption" color="textSecondary">אין תמונה</Typography>
+                        </Box>
                       )}
+                      {/* --- סוף הוספת התמונה --- */}
+
+                      <Box>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#333' }}>
+                          {entry.title || 'טיול ללא כותרת'}
+                        </Typography>
+                        {entry.description && (
+                          <Typography variant="body2" color="textSecondary" sx={{ mt: 0.5, whiteSpace: 'pre-line' }}>
+                            {entry.description}
+                          </Typography>
+                        )}
+                      </Box>
                     </Box>
                     
+                    {/* צד שמאל של השורה: סטטוס, דירוג וכפתור עריכה */}
                     <Box sx={{ textAlign: 'left', minWidth: '140px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
                       <Box sx={{ textAlign: 'left' }}>
                         <Typography variant="body2" sx={{ fontWeight: 'bold', color: entry.status === 'VISITED' ? '#305031' : '#cca010' }}>
@@ -126,7 +148,6 @@ const Dashboard = () => {
                         </Typography>
                       </Box>
                       
-                      {/* כפתור עריכה קטן ומעוצב לכל שורה */}
                       <Button 
                         size="small" 
                         variant="text" 
