@@ -7,7 +7,6 @@ import { Box, Typography, Button } from '@mui/material';
 const Dashboard = () => {
   const [searchParams, setSearchParams] = useState({ type: 'none', value: '' });
   
-  // State חדש שמחזיק את הטיול שאנחנו עורכים כרגע (או null אם אנחנו במצב הוספה)
   const [editingEntry, setEditingEntry] = useState<any | null>(null);
 
   const { data: entriesData, isLoading, isError } = useGetMyEntriesQuery(undefined);
@@ -24,7 +23,14 @@ const Dashboard = () => {
 
   const myEntriesArray = entriesData?.content || [];
 
-  // סינון מקומי מהיר בצד הלקוח
+  const uniqueCountries = Array.from(
+    new Set(
+      myEntriesArray
+        .map((entry: any) => entry.location?.country)
+        .filter(Boolean) 
+    )
+  ).sort() as string[]; 
+
   let filteredEntries = myEntriesArray;
   if (searchParams.type === 'country') {
     filteredEntries = myEntriesArray.filter((entry: any) => entry.location?.country === searchParams.value);
@@ -38,7 +44,6 @@ const Dashboard = () => {
     );
   }
 
-  // קיבוץ לקבוצות לפי מדינות בעזרת reduce
   const groupedEntries = filteredEntries.reduce((result: any, entry: any) => {
     const countryName = entry.location?.country || 'מדינות אחרות';
     if (!result[countryName]) {
@@ -50,7 +55,6 @@ const Dashboard = () => {
 
   const countries = Object.keys(groupedEntries);
 
-  // פונקציה שמכינה את הנתונים ומעבירה אותם לפורמט שהטופס מבין למצב עריכה
   const handleEditClick = (entry: any) => {
     setEditingEntry({
       id: entry.id,
@@ -58,15 +62,16 @@ const Dashboard = () => {
       description: entry.description,
       country: entry.location?.country || '',
       date: entry.date,
-      rating: entry.rating,
+      rating: entry.rating || 5, // מכינים דירוג 5 למקרה שנשנה ל'ביקרתי'
       status: entry.status,
+      isPublic: entry.isPublic,
+      location: entry.location 
     });
   };
 
   return (
     <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 4, p: 4, maxWidth: 1200, margin: 'auto' }}>
       
-      {/* עמודה ימנית: טופס הוספה/עריכה */}
       <Box sx={{ flex: 1 }}>
         <JournalForm 
           editData={editingEntry} 
@@ -74,13 +79,15 @@ const Dashboard = () => {
         />
       </Box>
 
-      {/* עמודה שמאלית: סרגל החיפוש והרשימה המקובצת */}
       <Box sx={{ flex: 1.5 }}>
         <Typography variant="h4" sx={{ mb: 2, fontWeight: 'bold', color: '#532E15' }}>
             יומני המסע שלי 
         </Typography>
 
-        <FilterBar onSearch={(type, value) => setSearchParams({ type, value })} />
+        <FilterBar 
+          availableCountries={uniqueCountries} 
+          onSearch={(type, value) => setSearchParams({ type, value })} 
+        />
         
         {isLoading ? (
           <Typography align="center" sx={{ mt: 4 }}>טוען את יומני המסע שלך...</Typography>
@@ -106,10 +113,8 @@ const Dashboard = () => {
                 {groupedEntries[country].map((entry: any) => (
                   <li key={entry.id} style={{ padding: '14px 0', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     
-                    {/* צד ימין של השורה: התמונה + הטקסט */}
                     <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flex: 1, pr: 2 }}>
                       
-                      {/* --- הוספת התמונה --- */}
                       {entry.imageUrl ? (
                         <Box
                           component="img"
@@ -118,12 +123,10 @@ const Dashboard = () => {
                           sx={{ width: 80, height: 80, objectFit: 'cover', borderRadius: '8px', flexShrink: 0 }}
                         />
                       ) : (
-                        // מקום ריק מעוצב במקרה שאין תמונה לטיול
                         <Box sx={{ width: 80, height: 80, backgroundColor: '#f0f0f0', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                           <Typography variant="caption" color="textSecondary">אין תמונה</Typography>
                         </Box>
                       )}
-                      {/* --- סוף הוספת התמונה --- */}
 
                       <Box>
                         <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#333' }}>
@@ -137,15 +140,23 @@ const Dashboard = () => {
                       </Box>
                     </Box>
                     
-                    {/* צד שמאל של השורה: סטטוס, דירוג וכפתור עריכה */}
                     <Box sx={{ textAlign: 'left', minWidth: '140px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
                       <Box sx={{ textAlign: 'left' }}>
                         <Typography variant="body2" sx={{ fontWeight: 'bold', color: entry.status === 'VISITED' ? '#305031' : '#cca010' }}>
                           {entry.status === 'VISITED' ? 'ביקרתי שם' : 'ברשימת המשאלות'}
                         </Typography>
-                        <Typography variant="caption" color="textSecondary" sx={{ display: 'block' }}>
-                          דירוג: {'★'.repeat(entry.rating || 5)}{'☆'.repeat(5 - (entry.rating || 5))}
-                        </Typography>
+                        
+                        {/* --- הטריק שלנו: --- 
+                            מסתירים את הכוכבים אם זו משאלה, בלי קשר למה שנשמר במסד הנתונים! */}
+                        {entry.status === 'VISITED' ? (
+                          <Typography variant="caption" color="textSecondary" sx={{ display: 'block' }}>
+                            דירוג: {'★'.repeat(entry.rating || 5)}{'☆'.repeat(5 - (entry.rating || 5))}
+                          </Typography>
+                        ) : (
+                          <Typography variant="caption" color="textSecondary" sx={{ display: 'block', fontStyle: 'italic' }}>
+                            (טרם דורג)
+                          </Typography>
+                        )}
                       </Box>
                       
                       <Button 

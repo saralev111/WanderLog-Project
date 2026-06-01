@@ -9,12 +9,12 @@ interface JournalFormInputs {
   title: string;
   description: string;
   date: string;
-  rating: number;
+  rating: number; // חזרנו למספר רגיל
   status: 'VISITED' | 'WISHLIST';
   country: string; 
   latitude?: number;  
   longitude?: number; 
-  isPublic: boolean; // <--- הוספנו את השדה החדש!
+  isPublic: boolean; 
 }
 
 interface JournalFormProps {
@@ -23,11 +23,11 @@ interface JournalFormProps {
 }
 
 const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
-  const { register, handleSubmit, control, formState: { errors }, reset, setValue } = useForm<JournalFormInputs>({
-    // ברירת המחדל היא שהיומן פרטי (false)
+  const { register, handleSubmit, control, formState: { errors }, reset, setValue, watch } = useForm<JournalFormInputs>({
     defaultValues: { title: '', description: '', country: '', date: new Date().toISOString().split('T')[0], rating: 5, status: 'VISITED', isPublic: false }
   });
 
+  const currentStatus = watch('status');
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   
   const [createEntry, { isLoading: isCreating }] = useCreateEntryMutation();
@@ -43,7 +43,8 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
         status: editData.status as 'VISITED' | 'WISHLIST',
         latitude: editData.location?.latitude,
         longitude: editData.location?.longitude,
-        isPublic: editData.isPublic ?? false // <--- שולפים את המצב הקיים בעריכה
+        rating: editData.rating || 5,
+        isPublic: editData.isPublic ?? false
       });
       setSelectedImage(null);
     } else {
@@ -74,9 +75,9 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
         title: data.title, 
         description: data.description, 
         date: data.date,
-        rating: data.rating, 
+        rating: data.rating || 5, // שולחים 5 מאחורי הקלעים אם חסר
         status: data.status, 
-        isPublic: data.isPublic, // <--- שולחים את הבחירה לשרת ה-Java!
+        isPublic: data.isPublic, 
         location: finalLocation 
       };
 
@@ -127,14 +128,16 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
           )} />
       </FormControl>
 
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 1, border: '1px solid #ccc', borderRadius: '4px' }}>
-        <Typography component="legend" sx={{ color: '#666' }}>דירוג החוויה שלך:</Typography>
-        <Controller name="rating" control={control} render={({ field }) => (
-            <Rating name="journal-rating" value={Number(field.value)} onChange={(event, newValue) => field.onChange(newValue)} />
-          )} />
-      </Box>
+      {/* אזור הדירוג - מוסתר אם זה רשימת משאלות */}
+      {currentStatus === 'VISITED' && (
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 1, border: '1px solid #ccc', borderRadius: '4px' }}>
+          <Typography component="legend" sx={{ color: '#666' }}>דירוג החוויה שלך:</Typography>
+          <Controller name="rating" control={control} render={({ field }) => (
+              <Rating name="journal-rating" value={Number(field.value) || 5} onChange={(event, newValue) => field.onChange(newValue || 5)} />
+            )} />
+        </Box>
+      )}
 
-      {/* --- התוספת החדשה: מתג יומן ציבורי/פרטי --- */}
       <Box sx={{ p: 1, border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#f9f9f9' }}>
         <Controller
           name="isPublic"
@@ -148,7 +151,6 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
                   color="primary"
                 />
               }
-              // הטקסט משתנה באופן דינמי בהתאם לבחירה של המשתמש!
               label={
                 <Typography sx={{ fontWeight: field.value ? 'bold' : 'normal', color: field.value ? '#1976d2' : '#666' }}>
                   {field.value ? "🌍 יומן ציבורי (גלוי לכולם)" : "🔒 יומן פרטי (רק אני רואה)"}
@@ -171,7 +173,14 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
         />
       </Box>
 
-      <TextField label="ספרי על החוויות שלך מהטיול..." variant="outlined" multiline rows={4} fullWidth {...register('description')} />
+      <TextField 
+        label={currentStatus === 'VISITED' ? "ספרי על החוויות שלך מהטיול..." : "מה התכנונים שלך לטיול הזה?..."} 
+        variant="outlined" 
+        multiline 
+        rows={4} 
+        fullWidth 
+        {...register('description')} 
+      />
 
       {!isEditMode && (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'center', p: 2, border: '1px dashed #ccc', borderRadius: '8px', backgroundColor: '#fafafa' }}>

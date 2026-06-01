@@ -3,9 +3,10 @@ import { Box, TextField, FormControl, InputLabel, Select, MenuItem, Button } fro
 
 interface FilterBarProps {
   onSearch: (type: 'keyword' | 'country' | 'rating' | 'none', value: any) => void;
+  availableCountries: string[]; // <--- הוספנו את רשימת המדינות ל-Props
 }
 
-const FilterBar = ({ onSearch }: FilterBarProps) => {
+const FilterBar = ({ onSearch, availableCountries }: FilterBarProps) => {
   const [keyword, setKeyword] = useState('');
   const [country, setCountry] = useState('');
   const [rating, setRating] = useState('');
@@ -87,7 +88,6 @@ const FilterBar = ({ onSearch }: FilterBarProps) => {
         </Select>
       </FormControl>
 
-      {/* 2. חיפוש חופשי (משולב עם כפתור החיפוש) */}
       {/* 2. חיפוש חופשי (משולב עם כפתור החיפוש - הורחב!) */}
       <Box sx={{ display: 'flex', flexGrow: 4, gap: 1 }}>
         <TextField
@@ -114,6 +114,7 @@ const FilterBar = ({ onSearch }: FilterBarProps) => {
           חפש
         </Button>
       </Box>
+      
       {/* 3. סינון לפי מדינה */}
       <FormControl size="small" sx={{ minWidth: 140 }}>
         <InputLabel id="country-label">מדינה</InputLabel>
@@ -126,10 +127,10 @@ const FilterBar = ({ onSearch }: FilterBarProps) => {
           sx={{ height: unifiedHeight }} // הכרחת גובה
         >
           <MenuItem value=""><em>הכל</em></MenuItem>
-          <MenuItem value="ישראל">ישראל</MenuItem>
-          <MenuItem value="צרפת">צרפת</MenuItem>
-          <MenuItem value="איטליה">איטליה</MenuItem>
-          <MenuItem value="אנגליה">אנגליה</MenuItem>
+          {/* --- תפריט דינמי שמושך את המדינות הקיימות --- */}
+          {availableCountries.map((c) => (
+            <MenuItem key={c} value={c}>{c}</MenuItem>
+          ))}
         </Select>
       </FormControl>
 
