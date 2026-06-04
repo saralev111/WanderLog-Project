@@ -58,6 +58,7 @@ public class SecurityConfig {
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
 
+
                         // הרשאות למנהל בלבד
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
 

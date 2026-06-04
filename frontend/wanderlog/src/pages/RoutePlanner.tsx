@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button, Paper, List, ListItem, ListItemText, Divider, CircularProgress, IconButton, Tooltip } from '@mui/material';
+import { Box, Typography, Button, Paper, List, ListItem, ListItemText, Divider, CircularProgress, IconButton, Tooltip, TextField } from '@mui/material';
 import { useSelector, useDispatch } from 'react-redux';
 import { updateRouteOrder, toggleRouteEntry } from '../features/routeSlice';
 import type { RootState } from '../features/store';
 import { useOptimizeRouteMutation, useGetAiAdviceMutation } from '../app/api/journalApi';
-import ReactMarkdown from 'react-markdown'; // <--- הספרייה המקצועית
+import ReactMarkdown from 'react-markdown'; 
+import { useNavigate } from 'react-router-dom';
+import { useSaveTripMutation } from '../app/api/tripApi'; 
 
 // ספריות הגרירה (Drag & Drop)
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
@@ -22,7 +24,6 @@ import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// פונקציות עזר (נשאר ללא שינוי)
 const createNumberedIcon = (number: number) => {
   return L.divIcon({
     className: 'custom-numbered-icon',
@@ -49,6 +50,7 @@ const SortableRouteItem = ({ id, place, index, onRemove }: any) => {
     backgroundColor: isDragging ? '#f0f0f0' : 'transparent',
     zIndex: isDragging ? 2 : 1,
   };
+
   return (
     <ListItem ref={setNodeRef} style={style} sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1.5 }}>
       <Box {...attributes} {...listeners} sx={{ cursor: 'grab', display: 'flex', alignItems: 'center', color: '#999' }}>
@@ -72,6 +74,10 @@ export default function RoutePlanner() {
   const [optimizeRoute, { isLoading: isOptimizing }] = useOptimizeRouteMutation();
   const [getAiAdvice, { isLoading: isAiLoading }] = useGetAiAdviceMutation();
   const [aiAdvice, setAiAdvice] = useState<string | null>(null);
+
+  const navigate = useNavigate();
+  const [tripTitle, setTripTitle] = useState("");
+  const [saveTrip, { isLoading: isSaving }] = useSaveTripMutation();
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -116,10 +122,30 @@ export default function RoutePlanner() {
     }
   };
 
-  const pathCoordinates: [number, number][] = places.map(place => [
-    place.location.latitude,
-    place.location.longitude
-  ]);
+  const handleSaveTrip = async () => {
+    if (!tripTitle.trim()) {
+      alert("אנא הזיני שם לטיול לפני השמירה");
+      return;
+    }
+    try {
+      // ✅ שליחת ה-IDs בלבד
+      await saveTrip({
+        title: tripTitle,
+        journalEntryIds: places.map(p => p.id) 
+      }).unwrap();
+
+      alert("הטיול נשמר בהצלחה!");
+      navigate('/explore');
+    } catch (err) {
+      console.error("שגיאה בשמירת הטיול:", err);
+      alert("אופס, משהו השתבש בשמירת הטיול.");
+    }
+  };
+
+  // ✅ יצירת משתנה בטוח למפה
+  const pathCoordinates: [number, number][] = places
+    .filter(p => p.location && p.location.latitude && p.location.longitude)
+    .map(p => [p.location.latitude, p.location.longitude]);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, minHeight: '85vh', p: 4, gap: 4, maxWidth: 1400, mx: 'auto' }}>
@@ -141,47 +167,42 @@ export default function RoutePlanner() {
 
         <Paper elevation={2} sx={{ p: 2, borderRadius: 3, flex: 1, backgroundColor: '#FCFBF8', overflowY: 'auto' }}>
           <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold', color: '#305031' }}>סדר הביקור ({places.length} יעדים):</Typography>
-          {places.length === 0 ? (
-            <Box sx={{ textAlign: 'center', mt: 4, color: '#999' }}>
-              <Typography>עדיין לא הוספת יעדים למסלול.</Typography>
-            </Box>
-          ) : (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={places.map(p => p.id)} strategy={verticalListSortingStrategy}>
-                <List sx={{ p: 0 }}>
-                  {places.map((place, index) => (
-                    <React.Fragment key={place.id}>
-                      <SortableRouteItem id={place.id} place={place} index={index} onRemove={handleRemovePlace} />
-                      {index < places.length - 1 && <Divider />}
-                    </React.Fragment>
-                  ))}
-                </List>
-              </SortableContext>
-            </DndContext>
-          )}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={places.map(p => p.id)} strategy={verticalListSortingStrategy}>
+              <List sx={{ p: 0 }}>
+                {places.map((place, index) => (
+                  <React.Fragment key={place.id}>
+                    <SortableRouteItem id={place.id} place={place} index={index} onRemove={handleRemovePlace} />
+                    {index < places.length - 1 && <Divider />}
+                  </React.Fragment>
+                ))}
+              </List>
+            </SortableContext>
+          </DndContext>
         </Paper>
 
-        {/* כאן הקסם קורה: הטיפ מוצג עכשיו מעוצב ומקצועי! */}
         {aiAdvice && (
           <Paper elevation={3} sx={{ p: 3, borderRadius: 3, backgroundColor: '#E8F5E9', border: '1px solid #C8E6C9' }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: '#2E7D32', mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <SmartToyIcon fontSize="small" /> טיפ מהיועץ החכם:
-            </Typography>
-            <Box sx={{ color: '#2E7D32', '& p': { m: 0 }, '& ul': { pl: 2, m: 0 } }}>
-               <ReactMarkdown>{aiAdvice}</ReactMarkdown>
-            </Box>
+             <ReactMarkdown>{aiAdvice}</ReactMarkdown>
+          </Paper>
+        )}
+
+        {places.length > 0 && (
+          <Paper elevation={3} sx={{ p: 3, borderRadius: 3, backgroundColor: '#fff', border: '2px dashed #cca010' }}>
+            <TextField fullWidth label="שם הטיול" value={tripTitle} onChange={(e) => setTripTitle(e.target.value)} sx={{ mb: 2 }} />
+            <Button variant="contained" fullWidth onClick={handleSaveTrip} disabled={isSaving}>💾 שמור טיול</Button>
           </Paper>
         )}
       </Box>
 
       <Box sx={{ flex: 1.5, borderRadius: '16px', overflow: 'hidden', boxShadow: '0px 4px 12px rgba(0,0,0,0.1)', minHeight: '600px', border: '4px solid #fff' }}>
         <MapContainer center={[48.8566, 2.3522]} zoom={5} style={{ height: '100%', width: '100%' }}>
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap' />
+          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           <MapBoundsUpdater coordinates={pathCoordinates} />
-          {places.map((place, index) => (
-            <Marker key={`marker-${place.id}`} position={[place.location.latitude, place.location.longitude]} icon={createNumberedIcon(index + 1)} />
+          {places.filter(p => p.location?.latitude && p.location?.longitude).map((place, index) => (
+            <Marker key={place.id} position={[place.location.latitude, place.location.longitude]} icon={createNumberedIcon(index + 1)} />
           ))}
-          {places.length > 1 && <Polyline positions={pathCoordinates} pathOptions={{ color: '#cca010', weight: 4, opacity: 0.8, dashArray: '10, 10' }} />}
+          {places.length > 1 && <Polyline positions={pathCoordinates} pathOptions={{ color: '#cca010' }} />}
         </MapContainer>
       </Box>
     </Box>

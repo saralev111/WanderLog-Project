@@ -4,18 +4,20 @@ import { journalApi } from '../app/api/journalApi'; // הוספנו את היי�
 import authReducer from './authSlice';
 import { adminApi } from '../app/api/adminApi';
 import routeReducer from './routeSlice';
+import { tripApi } from '../app/api/tripApi'; // <-- 1. ייבוא ה-API החדש
 
 export const store = configureStore({
   reducer: {
     [authApi.reducerPath]: authApi.reducer,
     [journalApi.reducerPath]: journalApi.reducer,
     [adminApi.reducerPath]: adminApi.reducer, 
+    [tripApi.reducerPath]: tripApi.reducer,
     auth: authReducer,
     route: routeReducer,
   },
   middleware: (getDefaultMiddleware) =>
     // חיברנו גם את המידלוור של היומנים
-    getDefaultMiddleware().concat(authApi.middleware, journalApi.middleware,adminApi.middleware),
+    getDefaultMiddleware().concat(authApi.middleware, journalApi.middleware,adminApi.middleware, tripApi.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

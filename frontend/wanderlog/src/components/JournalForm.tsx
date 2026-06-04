@@ -172,16 +172,33 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
       </Box>
 
       <Box sx={{ p: 1, border: '1px solid #ccc', borderRadius: '4px' }}>
-        <Typography variant="subtitle2" sx={{ mb: 1, color: '#666' }}>בחרי מיקום מדויק על המפה (חיפוש או לחיצה):</Typography>
-        <MapSelector
-          onLocationSelect={(lat, lng) => {
-            setValue('latitude', lat);
-            setValue('longitude', lng);
-          }}
-          defaultLat={editData?.location?.latitude}
-          defaultLng={editData?.location?.longitude}
-        />
-      </Box>
+  <Typography variant="subtitle2" sx={{ mb: 1, color: '#666' }}>
+    בחרי מיקום מדויק על המפה (חיפוש או לחיצה):
+  </Typography>
+  
+  {/* עטיפת המפה ב-Controller כדי לסנכרן אותה עם React Hook Form */}
+  <Controller
+    name="latitude" // נשתמש ב-latitude בתור ה"עוגן" (השדה המרכזי שמפעיל את העדכון)
+    control={control}
+    render={({ field: { value: latValue } }) => (
+       <Controller
+         name="longitude"
+         control={control}
+         render={({ field: { value: lngValue } }) => (
+            <MapSelector
+              onLocationSelect={(lat, lng) => {
+                setValue('latitude', lat, { shouldValidate: true, shouldDirty: true });
+                setValue('longitude', lng, { shouldValidate: true, shouldDirty: true });
+              }}
+              // במקום להעביר את ה-editData המקורי (שעלול להיות ישן), אנחנו מעבירים את הסטייט המעודכן והחי מהטופס!
+              defaultLat={latValue !== undefined ? latValue : editData?.location?.latitude}
+              defaultLng={lngValue !== undefined ? lngValue : editData?.location?.longitude}
+            />
+         )}
+       />
+    )}
+  />
+</Box>
 
       <TextField
         label={currentStatus === 'VISITED' ? "ספרי על החוויות שלך מהטיול..." : "מה התכנונים שלך לטיול הזה?..."}
