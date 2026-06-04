@@ -8,6 +8,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException; // <-- הוספנו את הייבוא הזה
 import org.springframework.web.client.RestTemplate;
 
 @Service
@@ -51,6 +52,11 @@ public class AiRecommendationService {
                     .path("text").asText();
 
             return aiText;
+
+        } catch (HttpClientErrorException.TooManyRequests e) {
+            // <-- הוספנו את הבלוק הזה שיתפוס את השגיאה המכוערת ויהפוך אותה לטקסט נעים
+            System.err.println("עומס פניות למודל ה-AI: " + e.getMessage());
+            return "היועץ החכם קיבל הרבה פניות לאחרונה וצריך רגע לנשום 😅. אנא המתינו דקה ונסו שוב!";
 
         } catch (Exception e) {
             System.err.println("שגיאה בתקשורת עם ה-AI: " + e.getMessage());

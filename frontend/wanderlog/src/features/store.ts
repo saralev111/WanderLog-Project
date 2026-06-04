@@ -3,6 +3,7 @@ import { authApi } from '../app/api/authApi';
 import { journalApi } from '../app/api/journalApi'; // הוספנו את הייבוא הזה
 import authReducer from './authSlice';
 import { adminApi } from '../app/api/adminApi';
+import routeReducer from './routeSlice';
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     [journalApi.reducerPath]: journalApi.reducer,
     [adminApi.reducerPath]: adminApi.reducer, 
     auth: authReducer,
+    route: routeReducer,
   },
   middleware: (getDefaultMiddleware) =>
     // חיברנו גם את המידלוור של היומנים

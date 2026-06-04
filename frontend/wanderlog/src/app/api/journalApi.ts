@@ -82,6 +82,7 @@ export const journalApi = createApi({
       }),
       invalidatesTags: ['Journals'],
     }),
+    
     optimizeRoute: builder.mutation({
       query: (places) => ({
         url: '/optimize-route',
@@ -89,14 +90,24 @@ export const journalApi = createApi({
         body: places,
       }),
     }),
+    
     createEntryWithImage: builder.mutation({
       query: (formData: FormData) => ({
         url: '/with-image', // פונה לנתיב המיוחד בשרת שמטפל בתמונות
         method: 'POST',
         body: formData,
-        // שימו לב: כששולחים FormData, אין צורך להגדיר Content-Type! הדפדפן עושה את זה אוטומטית.
       }),
       invalidatesTags: ['Journals'], 
+    }),
+
+    // --- הוספנו את ה-AI כאן ---
+    getAiAdvice: builder.mutation({
+      query: (ids: number[]) => ({
+        url: '/ai-advice',
+        method: 'POST',
+        body: ids,
+        responseHandler: 'text', // חובה כדי שהשרת יוכל להחזיר טקסט רגיל
+      }),
     }),
     
   }),
@@ -112,4 +123,5 @@ export const {
   useSearchByRatingQuery,
   useSearchByKeywordQuery,
   useOptimizeRouteMutation,
+  useGetAiAdviceMutation, 
 } = journalApi;

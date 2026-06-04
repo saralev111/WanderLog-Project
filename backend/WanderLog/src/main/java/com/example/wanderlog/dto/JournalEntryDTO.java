@@ -1,5 +1,6 @@
 package com.example.wanderlog.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import java.time.LocalDate;
 
@@ -12,6 +13,8 @@ public class JournalEntryDTO {
     private Integer rating;
     private String status;
     private Integer visitOrder;
+    @JsonProperty("isPublic")
+    private boolean isPublic;
     private UserDTO user;      // משתמש ב-DTO ולא ב-Entity!
     private LocationDTO location; // משתמש ב-DTO ולא ב-Entity!
     private String imageUrl;

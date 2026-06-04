@@ -1,6 +1,5 @@
 package com.example.wanderlog.security;
 
-import com.example.wanderlog.Entities.UserRole;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -9,10 +8,14 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+import java.nio.charset.StandardCharsets;
 
 @Component
 public class JwtUtil {
-    private final SecretKey key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+
+    // הגדרנו מפתח סודי קבוע וארוך! עכשיו הריסטארטים של השרת לא יהרסו את הטוקן
+    private static final String SECRET_STRING = "MySuperSecretKeyForWanderLogApp1234567890!";
+    private final SecretKey key = Keys.hmacShaKeyFor(SECRET_STRING.getBytes(StandardCharsets.UTF_8));
 
     public String generateToken(String userName, String role){
         return Jwts.builder()

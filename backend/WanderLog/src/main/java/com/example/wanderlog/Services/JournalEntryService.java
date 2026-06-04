@@ -63,6 +63,12 @@ public class JournalEntryService {
         if(newJournalEntry.getDate() == null) {
             newJournalEntry.setDate(LocalDate.now());
         }
+
+        // הוספנו: חסימת יומן ציבורי אם הסטטוס אינו VISITED
+        if (newJournalEntry.getStatus() != TravelStatus.VISITED) {
+            newJournalEntry.setPublic(false);
+        }
+
         return journalEntryRepo.save(newJournalEntry);
     }
 
@@ -112,7 +118,15 @@ public class JournalEntryService {
         // עדכון: מאפשר שמירה ידנית של סדר המסלול אם המשתמש משנה אותו
         if (details.getVisitOrder() != null) existingEntry.setVisitOrder(details.getVisitOrder());
 
-        existingEntry.setPublic(details.isPublic());
+// עדכון: מאפשר שמירה ידנית של סדר המסלול אם המשתמש משנה אותו
+        if (details.getVisitOrder() != null) existingEntry.setVisitOrder(details.getVisitOrder());
+
+        // הוספנו: וידוא סטטוס עבור פרסום פומבי בעת עדכון
+        if (existingEntry.getStatus() != TravelStatus.VISITED) {
+            existingEntry.setPublic(false);
+        } else {
+            existingEntry.setPublic(details.isPublic());
+        }
 
         return journalEntryRepo.save(existingEntry);
     }

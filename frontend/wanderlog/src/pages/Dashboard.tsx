@@ -3,13 +3,21 @@ import { useGetMyEntriesQuery } from '../app/api/journalApi';
 import JournalForm from '../components/JournalForm';
 import FilterBar from '../components/FilterBar';
 import { Box, Typography, Button } from '@mui/material';
+import { useDispatch, useSelector } from 'react-redux';
+import { toggleRouteEntry } from '../features/routeSlice';
+import type { RootState } from '../features/store';
+import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
+import PlaylistAddCheckIcon from '@mui/icons-material/PlaylistAddCheck';
 
 const Dashboard = () => {
   const [searchParams, setSearchParams] = useState({ type: 'none', value: '' });
-  
   const [editingEntry, setEditingEntry] = useState<any | null>(null);
 
   const { data: entriesData, isLoading, isError } = useGetMyEntriesQuery(undefined);
+  
+  // הגדרות Redux עבור סל היעדים
+  const dispatch = useDispatch();
+  const selectedRouteEntries = useSelector((state: RootState) => state.route.selectedEntries);
   
   if (isError) {
     return (
@@ -140,14 +148,13 @@ const Dashboard = () => {
                       </Box>
                     </Box>
                     
-                    <Box sx={{ textAlign: 'left', minWidth: '140px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
+                    {/* אזור הכפתורים והסטטוס המעודכן */}
+                    <Box sx={{ textAlign: 'left', minWidth: '150px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
                       <Box sx={{ textAlign: 'left' }}>
                         <Typography variant="body2" sx={{ fontWeight: 'bold', color: entry.status === 'VISITED' ? '#305031' : '#cca010' }}>
                           {entry.status === 'VISITED' ? 'ביקרתי שם' : 'ברשימת המשאלות'}
                         </Typography>
                         
-                        {/* --- הטריק שלנו: --- 
-                            מסתירים את הכוכבים אם זו משאלה, בלי קשר למה שנשמר במסד הנתונים! */}
                         {entry.status === 'VISITED' ? (
                           <Typography variant="caption" color="textSecondary" sx={{ display: 'block' }}>
                             דירוג: {'★'.repeat(entry.rating || 5)}{'☆'.repeat(5 - (entry.rating || 5))}
@@ -159,14 +166,44 @@ const Dashboard = () => {
                         )}
                       </Box>
                       
-                      <Button 
-                        size="small" 
-                        variant="text" 
-                        onClick={() => handleEditClick(entry)}
-                        sx={{ color: '#cca010', fontWeight: 'bold', minWidth: 'auto', p: 0, '&:hover': { color: '#b08a0e' } }}
-                      >
-                        ערוך יומן
-                      </Button>
+                      <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
+                        <Button 
+                          size="small" 
+                          variant="text" 
+                          onClick={() => handleEditClick(entry)}
+                          sx={{ color: '#cca010', fontWeight: 'bold', minWidth: 'auto', p: 0, '&:hover': { color: '#b08a0e' } }}
+                        >
+                          עריכה
+                        </Button>
+
+                        {/* כפתור הוספה למסלול (הסל קניות שלנו) */}
+                        <Button 
+                          size="small" 
+                          variant={selectedRouteEntries.some(e => e.id === entry.id) ? "contained" : "outlined"}
+                          color={selectedRouteEntries.some(e => e.id === entry.id) ? "success" : "primary"}
+                          onClick={() => dispatch(toggleRouteEntry({
+                            id: entry.id,
+                            title: entry.title,
+                            location: entry.location
+                          }))}
+                          sx={{ 
+                            borderRadius: '20px', 
+                            textTransform: 'none', 
+                            p: '2px 8px', 
+                            fontSize: '0.75rem',
+                            backgroundColor: selectedRouteEntries.some(e => e.id === entry.id) ? '#305031' : 'transparent',
+                            borderColor: '#305031',
+                            color: selectedRouteEntries.some(e => e.id === entry.id) ? 'white' : '#305031',
+                            '&:hover': {
+                              backgroundColor: selectedRouteEntries.some(e => e.id === entry.id) ? '#243b25' : 'rgba(48, 80, 49, 0.1)'
+                            }
+                          }}
+                          startIcon={selectedRouteEntries.some(e => e.id === entry.id) ? <PlaylistAddCheckIcon /> : <PlaylistAddIcon />}
+                        >
+                          {selectedRouteEntries.some(e => e.id === entry.id) ? 'במסלול' : 'הוסף למסלול'}
+                        </Button>
+                      </Box>
+
                     </Box>
                   </li>
                 ))}

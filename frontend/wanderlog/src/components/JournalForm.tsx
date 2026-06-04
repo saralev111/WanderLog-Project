@@ -9,12 +9,12 @@ interface JournalFormInputs {
   title: string;
   description: string;
   date: string;
-  rating: number; // חזרנו למספר רגיל
+  rating: number; 
   status: 'VISITED' | 'WISHLIST';
-  country: string; 
-  latitude?: number;  
-  longitude?: number; 
-  isPublic: boolean; 
+  country: string;
+  latitude?: number;
+  longitude?: number;
+  isPublic: boolean;
 }
 
 interface JournalFormProps {
@@ -29,11 +29,11 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
 
   const currentStatus = watch('status');
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  
+
   const [createEntry, { isLoading: isCreating }] = useCreateEntryMutation();
   const [createEntryWithImage, { isLoading: isCreatingWithImage }] = useCreateEntryWithImageMutation();
   const [updateEntry, { isLoading: isUpdating }] = useUpdateEntryMutation();
-  
+
   const isEditMode = !!editData;
 
   useEffect(() => {
@@ -44,7 +44,7 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
         latitude: editData.location?.latitude,
         longitude: editData.location?.longitude,
         rating: editData.rating || 5,
-        isPublic: editData.isPublic ?? false
+        isPublic: editData.isPublic ?? (editData as any).public ?? false 
       });
       setSelectedImage(null);
     } else {
@@ -56,6 +56,13 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
     }
   }, [editData, reset]);
 
+  // איפוס אוטומטי של "יומן ציבורי" רק כשהסטטוס במפורש 'WISHLIST'
+  useEffect(() => {
+    if (currentStatus === 'WISHLIST') {
+      setValue('isPublic', false);
+    }
+  }, [currentStatus, setValue]);
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) setSelectedImage(e.target.files[0]);
   };
@@ -63,22 +70,22 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
   const onSubmit = async (data: JournalFormInputs) => {
     try {
       const finalLocation = {
-        country: data.country, 
-        name: data.country, 
+        country: data.country,
+        name: data.country,
         address: data.country,
-        latitude: data.latitude || 0, 
-        longitude: data.longitude || 0, 
+        latitude: data.latitude || 0,
+        longitude: data.longitude || 0,
         googlePlaceId: editData?.location?.googlePlaceId || `temp-id-${Date.now()}`
       };
 
       const entryDataForServer = {
-        title: data.title, 
-        description: data.description, 
+        title: data.title,
+        description: data.description,
         date: data.date,
-        rating: data.rating || 5, // שולחים 5 מאחורי הקלעים אם חסר
-        status: data.status, 
-        isPublic: data.isPublic, 
-        location: finalLocation 
+        rating: data.rating || 5, 
+        status: data.status,
+        isPublic: data.isPublic,
+        location: finalLocation
       };
 
       if (isEditMode && editData) {
@@ -121,20 +128,19 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
       <FormControl fullWidth error={!!errors.status}>
         <InputLabel id="status-label">סטטוס הטיול</InputLabel>
         <Controller name="status" control={control} render={({ field }) => (
-            <Select labelId="status-label" label="סטטוס הטיול" {...field}>
-              <MenuItem value="VISITED">ביקרתי שם (Visited)</MenuItem>
-              <MenuItem value="WISHLIST">רשימת משאלות (Wishlist)</MenuItem>
-            </Select>
-          )} />
+          <Select labelId="status-label" label="סטטוס הטיול" {...field}>
+            <MenuItem value="VISITED">ביקרתי שם (Visited)</MenuItem>
+            <MenuItem value="WISHLIST">רשימת משאלות (Wishlist)</MenuItem>
+          </Select>
+        )} />
       </FormControl>
 
-      {/* אזור הדירוג - מוסתר אם זה רשימת משאלות */}
       {currentStatus === 'VISITED' && (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 1, border: '1px solid #ccc', borderRadius: '4px' }}>
           <Typography component="legend" sx={{ color: '#666' }}>דירוג החוויה שלך:</Typography>
           <Controller name="rating" control={control} render={({ field }) => (
-              <Rating name="journal-rating" value={Number(field.value) || 5} onChange={(event, newValue) => field.onChange(newValue || 5)} />
-            )} />
+            <Rating name="journal-rating" value={Number(field.value) || 5} onChange={(event, newValue) => field.onChange(newValue || 5)} />
+          )} />
         </Box>
       )}
 
@@ -149,10 +155,14 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
                   checked={field.value}
                   onChange={(e) => field.onChange(e.target.checked)}
                   color="primary"
+                  disabled={currentStatus !== 'VISITED'}
                 />
               }
               label={
-                <Typography sx={{ fontWeight: field.value ? 'bold' : 'normal', color: field.value ? '#1976d2' : '#666' }}>
+                <Typography sx={{
+                  fontWeight: field.value ? 'bold' : 'normal',
+                  color: currentStatus !== 'VISITED' ? '#ccc' : (field.value ? '#1976d2' : '#666')
+                }}>
                   {field.value ? "🌍 יומן ציבורי (גלוי לכולם)" : "🔒 יומן פרטי (רק אני רואה)"}
                 </Typography>
               }
@@ -163,23 +173,23 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
 
       <Box sx={{ p: 1, border: '1px solid #ccc', borderRadius: '4px' }}>
         <Typography variant="subtitle2" sx={{ mb: 1, color: '#666' }}>בחרי מיקום מדויק על המפה (חיפוש או לחיצה):</Typography>
-        <MapSelector 
+        <MapSelector
           onLocationSelect={(lat, lng) => {
             setValue('latitude', lat);
             setValue('longitude', lng);
-          }} 
-          defaultLat={editData?.location?.latitude} 
+          }}
+          defaultLat={editData?.location?.latitude}
           defaultLng={editData?.location?.longitude}
         />
       </Box>
 
-      <TextField 
-        label={currentStatus === 'VISITED' ? "ספרי על החוויות שלך מהטיול..." : "מה התכנונים שלך לטיול הזה?..."} 
-        variant="outlined" 
-        multiline 
-        rows={4} 
-        fullWidth 
-        {...register('description')} 
+      <TextField
+        label={currentStatus === 'VISITED' ? "ספרי על החוויות שלך מהטיול..." : "מה התכנונים שלך לטיול הזה?..."}
+        variant="outlined"
+        multiline
+        rows={4}
+        fullWidth
+        {...register('description')}
       />
 
       {!isEditMode && (

@@ -19,20 +19,29 @@ import java.util.List;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
+
     @Autowired
     private JwtUtil jwtUtil;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        String path=request.getContextPath();
 
-        if(path.startsWith("/users/login")||path.startsWith("/users/register")){
+        // תיקון: משתמשים ב-URI המלא ולא ב-Context
+        String path = request.getRequestURI();
+
+        // מאפשרים לבקשות בדיקה של הדפדפן (OPTIONS) לעבור אוטומטית ללא טוקן
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        if(path.startsWith("/users/login") || path.startsWith("/users/register")){
             filterChain.doFilter(request,response);
             return;
         }
 
-        final String authHeader=request.getHeader("Authorization");
+        final String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             try {
@@ -48,6 +57,8 @@ public class JwtFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             } catch (JwtException e) {
+                // אם הטוקן פג תוקף או שגוי, נדפיס לקונסול כדי לדעת ונחסום
+                System.err.println("שגיאת הרשאה - טוקן לא חוקי: " + e.getMessage());
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 return;
             }
@@ -56,4 +67,3 @@ public class JwtFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 }
-
