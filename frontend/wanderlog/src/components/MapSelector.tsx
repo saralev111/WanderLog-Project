@@ -64,6 +64,13 @@ export default function MapSelector({ onLocationSelect, defaultLat, defaultLng }
     defaultLat && defaultLng ? [defaultLat, defaultLng] : null
   );
   
+  useEffect(() => {
+    if (defaultLat !== undefined && defaultLng !== undefined) {
+      setPosition({ lat: defaultLat, lng: defaultLng });
+      setFlyCenter([defaultLat, defaultLng]);
+    }
+  }, [defaultLat, defaultLng]);
+
   const [value, setValue] = useState<SearchResult | null>(null);
   const [inputValue, setInputValue] = useState('');
   

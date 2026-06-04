@@ -1,5 +1,6 @@
 package com.example.wanderlog.Entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
@@ -54,5 +55,8 @@ public class JournalEntry {
 
     @ManyToOne(cascade = jakarta.persistence.CascadeType.ALL)
     @JoinColumn(name = "location_id",nullable = false)
+    @JsonIgnore
     private Location location;
+
+
 }
