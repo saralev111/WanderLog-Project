@@ -55,7 +55,6 @@ public class JournalEntry {
 
     @ManyToOne(cascade = jakarta.persistence.CascadeType.ALL)
     @JoinColumn(name = "location_id",nullable = false)
-    @JsonIgnore
     private Location location;
 
 

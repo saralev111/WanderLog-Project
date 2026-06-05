@@ -18,12 +18,10 @@ public class Trip {
     @JoinColumn(name = "user_id")
     private User user;
 
-    // ✅ התיקון: קשר של רבים לרבים! הטיול אוסף יומנים קיימים
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "trip_journal_entries",
             joinColumns = @JoinColumn(name = "trip_id"),
             inverseJoinColumns = @JoinColumn(name = "journal_entry_id")
     )
-    private List<JournalEntry> journalEntries = new ArrayList<>();
-}
+    private List<JournalEntry> journalEntries = new ArrayList<>();}
