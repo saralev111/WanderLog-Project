@@ -25,6 +25,7 @@ public class EntityMapper {
         dto.setCountry(location.getCountry());
         dto.setLatitude(location.getLatitude());
         dto.setLongitude(location.getLongitude());
+        dto.setGooglePlaceId(location.getGooglePlaceId());
         return dto;
     }
 

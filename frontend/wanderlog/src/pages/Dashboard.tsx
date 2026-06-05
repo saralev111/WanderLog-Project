@@ -73,7 +73,8 @@ const Dashboard = () => {
       rating: entry.rating || 5, // מכינים דירוג 5 למקרה שנשנה ל'ביקרתי'
       status: entry.status,
       isPublic: entry.isPublic,
-      location: entry.location 
+      location: entry.location,
+      imageUrl: entry.imageUrl
     });
   };
 

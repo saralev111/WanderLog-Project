@@ -4,7 +4,6 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { TextField, Box, Autocomplete, CircularProgress } from '@mui/material';
 
-// תיקון בעיית האייקונים הנסתרים של Leaflet בריאקט
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
@@ -15,8 +14,9 @@ const DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
+// הוספנו לפה את האפשרות להחזיר מדינה ושם מקום!
 interface MapSelectorProps {
-  onLocationSelect: (lat: number, lng: number) => void;
+  onLocationSelect: (lat: number, lng: number, country: string, addressName: string) => void;
   defaultLat?: number;
   defaultLng?: number;
 }
@@ -26,15 +26,18 @@ interface SearchResult {
   display_name: string;
   lat: string;
   lon: string;
+  address?: {
+    country?: string;
+    [key: string]: any;
+  };
 }
 
 interface LocationMarkerProps {
-  onLocationSelect: (lat: number, lng: number) => void;
+  onLocationSelect: (lat: number, lng: number, country: string, addressName: string) => void;
   position: { lat: number; lng: number } | null;
   setPosition: React.Dispatch<React.SetStateAction<{ lat: number; lng: number } | null>>;
 }
 
-// קומפוננטת עזר שמטיסה את המפה ליעד ברגע שבוחרים מהרשימה
 function MapController({ center }: { center: [number, number] | null }) {
   const map = useMap();
   useEffect(() => {
@@ -45,12 +48,25 @@ function MapController({ center }: { center: [number, number] | null }) {
   return null;
 }
 
-// קומפוננטת עזר שתופסת את הלחיצות הידניות על המפה
+// שדרוג: כשלוחצים על המפה, היא בודקת מול השרת איזו מדינה זו
 function LocationMarker({ onLocationSelect, position, setPosition }: LocationMarkerProps) {
   useMapEvents({
-    click(e) {
-      setPosition({ lat: e.latlng.lat, lng: e.latlng.lng });
-      onLocationSelect(e.latlng.lat, e.latlng.lng);
+    async click(e) {
+      const lat = e.latlng.lat;
+      const lng = e.latlng.lng;
+      setPosition({ lat, lng });
+
+      try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=he`);
+        const data = await response.json();
+        
+        // שולפים את שם המדינה, או את החלק האחרון של הכתובת אם המדינה לא הוגדרה בבירור
+        const country = data.address?.country || data.display_name?.split(',').pop()?.trim() || '';
+        onLocationSelect(lat, lng, country, data.display_name || '');
+      } catch (error) {
+        console.error("שגיאה בחילוץ מיקום מתוך המפה:", error);
+        onLocationSelect(lat, lng, '', '');
+      }
     },
   });
   return position === null ? null : <Marker position={position}></Marker>;
@@ -65,9 +81,13 @@ export default function MapSelector({ onLocationSelect, defaultLat, defaultLng }
   );
   
   useEffect(() => {
+    // בוטל האיפוס למרכז המפה פה כדי למנוע קפיצות כשיש default
     if (defaultLat !== undefined && defaultLng !== undefined) {
       setPosition({ lat: defaultLat, lng: defaultLng });
       setFlyCenter([defaultLat, defaultLng]);
+    } else {
+      setPosition(null);
+      setFlyCenter([31.7683, 35.2137]); 
     }
   }, [defaultLat, defaultLng]);
 
@@ -77,7 +97,6 @@ export default function MapSelector({ onLocationSelect, defaultLat, defaultLng }
   const [options, setOptions] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // מנגנון החיפוש החכם
   useEffect(() => {
     let active = true;
 
@@ -89,12 +108,12 @@ export default function MapSelector({ onLocationSelect, defaultLat, defaultLng }
     const timeoutId = setTimeout(async () => {
       setLoading(true);
       try {
+        // שדרוג: הוספנו addressdetails=1 כדי שהשרת יחזיר לנו את שם המדינה בנפרד!
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(inputValue)}&accept-language=he&limit=10`
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(inputValue)}&accept-language=he&limit=10&addressdetails=1`
         );
         const data = await response.json();
         
-        // סינון תוצאות כפולות
         const uniqueResults = data.filter((v: any, i: number, a: any[]) => 
           a.findIndex(t => (t.display_name === v.display_name)) === i
         );
@@ -120,10 +139,11 @@ export default function MapSelector({ onLocationSelect, defaultLat, defaultLng }
     if (newValue) {
       const lat = parseFloat(newValue.lat);
       const lng = parseFloat(newValue.lon);
+      const country = newValue.address?.country || newValue.display_name.split(',').pop()?.trim() || '';
       
       setPosition({ lat, lng });
       setFlyCenter([lat, lng]);
-      onLocationSelect(lat, lng);
+      onLocationSelect(lat, lng, country, newValue.display_name);
     }
   };
 
@@ -133,15 +153,8 @@ export default function MapSelector({ onLocationSelect, defaultLat, defaultLng }
       <Autocomplete
         id="location-autocomplete"
         sx={{ width: '100%' }}
-        // כאן הגדרנו את הרקע הלבן וההצללה כדי שהחלונית לא תהיה שקופה מעל המפה!
         slotProps={{
-          paper: {
-            sx: {
-              backgroundColor: '#ffffff',
-              boxShadow: '0px 8px 24px rgba(0,0,0,0.3)',
-              zIndex: 9999
-            }
-          }
+          paper: { sx: { backgroundColor: '#ffffff', boxShadow: '0px 8px 24px rgba(0,0,0,0.3)', zIndex: 9999 } }
         }}
         options={options}
         getOptionLabel={(option) => option.display_name || ''}
@@ -151,19 +164,13 @@ export default function MapSelector({ onLocationSelect, defaultLat, defaultLng }
         includeInputInList
         filterSelectedOptions
         value={value}
-        noOptionsText="לא נמצאו תוצאות (נסי להוסיף פסיק או שם עיר)"
+        noOptionsText="לא נמצאו תוצאות"
         loading={loading}
         loadingText="מחפש מיקומים..."
-        onChange={(event, newValue) => {
-          handleSelectResult(newValue);
-        }}
-        onInputChange={(event, newInputValue) => {
-          setInputValue(newInputValue);
-        }}
+        onChange={(event, newValue) => handleSelectResult(newValue)}
+        onInputChange={(event, newInputValue) => setInputValue(newInputValue)}
         renderInput={(params) => {
-          // חולצים את ההגדרות הישנות (InputProps) כדי ש-TypeScript ו-MUI V6 יהיו מרוצים
           const { InputProps, ...restParams } = params as any;
-
           return (
             <TextField
               {...restParams}
@@ -188,7 +195,6 @@ export default function MapSelector({ onLocationSelect, defaultLat, defaultLng }
         }}
       />
 
-      {/* אזור המפה */}
       <Box style={{ height: "300px", width: "100%", border: "1px solid #ccc", borderRadius: "8px", overflow: "hidden", zIndex: 1 }}>
         <MapContainer center={[31.7683, 35.2137]} zoom={8} style={{ height: "100%", width: "100%" }}>
           <TileLayer
@@ -199,7 +205,6 @@ export default function MapSelector({ onLocationSelect, defaultLat, defaultLng }
           <MapController center={flyCenter} />
         </MapContainer>
       </Box>
-
     </Box>
   );
 }

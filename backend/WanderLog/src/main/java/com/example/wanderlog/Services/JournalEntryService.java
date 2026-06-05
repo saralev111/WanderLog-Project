@@ -6,6 +6,7 @@ import com.example.wanderlog.Entities.TravelStatus;
 import com.example.wanderlog.Entities.User;
 import com.example.wanderlog.Entities.UserRole;
 import com.example.wanderlog.Repositories.JournalEntryRepo;
+import com.example.wanderlog.Repositories.LocationRepo;
 import com.example.wanderlog.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -14,7 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
+import org.springframework.transaction.annotation.Transactional;
 import java.nio.file.*;
 import java.util.UUID;
 import java.time.LocalDate;
@@ -30,6 +31,9 @@ public class JournalEntryService {
 
     @Autowired
     private JournalEntryRepo journalEntryRepo;
+
+    @Autowired
+    private LocationRepo locationRepo ;
 
     @Autowired
     private AiRecommendationService aiRecommendationService;
@@ -96,7 +100,7 @@ public class JournalEntryService {
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
         return journalEntryRepo.findByIsPublicTrue(pageable);
     }
-
+    @Transactional
     public JournalEntry updateEntry(Long id, JournalEntry details) {
         User currentUser = userService.getCurrentUser();
 
@@ -104,24 +108,42 @@ public class JournalEntryService {
                 .orElseThrow(() -> new ResourceNotFoundException("לא ניתן לעדכן: יומן עם מזהה " + id + " לא נמצא"));
 
         boolean isAdmin = currentUser.getRole() == UserRole.ROLE_ADMIN;
-        boolean isOwner = existingEntry.getUser().getId()==(currentUser.getId());
+        boolean isOwner = existingEntry.getUser().getId() == currentUser.getId();
 
         if (!isOwner && !isAdmin) {
             throw new RuntimeException("אין לך הרשאה לעדכן יומן זה.");
         }
 
+        // עדכון שדות טקסטואליים
         if (details.getTitle() != null) existingEntry.setTitle(details.getTitle());
         if (details.getDescription() != null) existingEntry.setDescription(details.getDescription());
         if (details.getRating() != 0) existingEntry.setRating(details.getRating());
         if (details.getStatus() != null) existingEntry.setStatus(details.getStatus());
-
-        // עדכון: מאפשר שמירה ידנית של סדר המסלול אם המשתמש משנה אותו
         if (details.getVisitOrder() != null) existingEntry.setVisitOrder(details.getVisitOrder());
+        if (details.getImageUrl() != null) existingEntry.setImageUrl(details.getImageUrl());
 
-// עדכון: מאפשר שמירה ידנית של סדר המסלול אם המשתמש משנה אותו
-        if (details.getVisitOrder() != null) existingEntry.setVisitOrder(details.getVisitOrder());
+        // --- התיקון: עדכון המיקום! ---
+        if (details.getLocation() != null) {
+            String placeId = details.getLocation().getGooglePlaceId();
+            // מחפשים אם המיקום החדש כבר קיים במאגר
+            Location newLocation = locationRepo.findByGooglePlaceId(placeId)
+                    .orElseGet(() -> {
+                        // אם לא, ניצור מיקום חדש
+                        Location loc = new Location();
+                        loc.setGooglePlaceId(placeId);
+                        loc.setName(details.getLocation().getName());
+                        loc.setAddress(details.getLocation().getAddress());
+                        loc.setCountry(details.getLocation().getCountry());
+                        loc.setLatitude(details.getLocation().getLatitude());
+                        loc.setLongitude(details.getLocation().getLongitude());
+                        return locationRepo.save(loc);
+                    });
+            // מקשרים את היומן למיקום החדש
+            existingEntry.setLocation(newLocation);
+        }
+        // ----------------------------
 
-        // הוספנו: וידוא סטטוס עבור פרסום פומבי בעת עדכון
+        // וידוא סטטוס עבור פרסום פומבי
         if (existingEntry.getStatus() != TravelStatus.VISITED) {
             existingEntry.setPublic(false);
         } else {

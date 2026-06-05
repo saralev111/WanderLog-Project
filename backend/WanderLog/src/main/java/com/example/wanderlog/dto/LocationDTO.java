@@ -10,4 +10,5 @@ public class LocationDTO {
     private String country;
     private Double latitude;
     private Double longitude;
+    private String googlePlaceId;
 }

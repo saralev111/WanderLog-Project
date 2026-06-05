@@ -106,6 +106,28 @@ public class JournalEntryController {
         return ResponseEntity.ok(entityMapper.toDTO(updated));
     }
 
+    @PutMapping(value = "/{id}/with-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updateEntryWithImage(
+            @PathVariable Long id,
+            @RequestPart("entry") String entryJson,
+            @RequestPart(value = "image", required = false) MultipartFile image) throws Exception {
+
+        // 1. הפיכת ה-JSON לאובייקט
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+        JournalEntry details = objectMapper.readValue(entryJson, JournalEntry.class);
+
+        // 2. אם המשתמש בחר תמונה חדשה, נשמור אותה ונעדכן את הנתיב
+        if (image != null && !image.isEmpty()) {
+            String imagePath = journalEntryService.saveImage(image);
+            details.setImageUrl(imagePath);
+        }
+
+        // 3. שליחה לשירות שיעדכן את היומן
+        JournalEntry updated = journalEntryService.updateEntry(id, details);
+        return ResponseEntity.ok(entityMapper.toDTO(updated));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteEntry(@PathVariable Long id) {
         journalEntryService.deleteEntry(id);

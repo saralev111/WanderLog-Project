@@ -82,6 +82,23 @@ export const journalApi = createApi({
       }),
       invalidatesTags: ['Journals'],
     }),
+
+    updateEntryWithImage: builder.mutation({
+      query: ({ id, formData }) => ({
+        url: `/${id}/with-image`, // פונה לנתיב החדש שיצרנו בשרת
+        method: 'PUT',
+        body: formData,
+      }),
+      invalidatesTags: ['Journals'],
+    }),
+
+    deleteEntry: builder.mutation({
+      query: (id) => ({
+        url: `/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Journals'], // מרענן את רשימת היומנים אוטומטית אחרי המחיקה
+    }),
     
     optimizeRoute: builder.mutation({
       query: (places) => ({
@@ -124,4 +141,6 @@ export const {
   useSearchByKeywordQuery,
   useOptimizeRouteMutation,
   useGetAiAdviceMutation, 
+  useUpdateEntryWithImageMutation,
+  useDeleteEntryMutation,
 } = journalApi;
