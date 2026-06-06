@@ -37,9 +37,11 @@ function App() {
             <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
             <Route path="/plan" element={<ProtectedRoute><RoutePlanner /></ProtectedRoute>} />
             
-            {/* התיקון שלנו: עטפנו גם את "כל הטיולים" בהגנה! */}
+            {/* נתיב עריכת מסלול (מהענף שלך) */}
+            <Route path="/plan/:tripId" element={<ProtectedRoute><RoutePlanner /></ProtectedRoute>} />
+            
+            {/* התיקון של הראשי: עטפנו גם את "כל הטיולים" בהגנה! */}
             <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
-
           </Routes>
         </Box>
         

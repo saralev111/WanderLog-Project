@@ -17,8 +17,8 @@ interface JournalFormInputs {
   date: string;
   rating: number;
   status: 'VISITED' | 'WISHLIST';
-  placeName: string; 
-  country: string;   
+  placeName: string;
+  country: string;
   latitude?: number;
   longitude?: number;
   isPublic: boolean;
@@ -52,7 +52,7 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
   const [createEntryWithImage, { isLoading: isCreatingWithImage }] = useCreateEntryWithImageMutation();
   const [updateEntry, { isLoading: isUpdating }] = useUpdateEntryMutation();
   const [updateEntryWithImage, { isLoading: isUpdatingWithImage }] = useUpdateEntryWithImageMutation();
-  
+
   const isEditMode = !!editData;
 
   useEffect(() => {
@@ -115,7 +115,6 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
         isEditMode &&
         editData?.location &&
         (data.latitude !== editData.location.latitude || data.longitude !== editData.location.longitude);
-
       // מרכיבים את המיקום בצורה חכמה: המדינה מהמפה, והשם מהשדה שהמשתמש הקליד
       const finalLocation = {
         country: data.country || 'לא צוינה מדינה',
@@ -174,8 +173,8 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
   const imagePreviewUrl = selectedImage
     ? URL.createObjectURL(selectedImage)
     : editData?.imageUrl
-    ? `http://localhost:9090${editData.imageUrl}`
-    : null;
+      ? `http://localhost:9090${editData.imageUrl}`
+      : null;
 
   return (
     <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, maxWidth: 500, margin: 'auto', p: 3, boxShadow: '0px 4px 12px rgba(0,0,0,0.1)', borderRadius: '12px', backgroundColor: '#fff', border: isEditMode ? '2px solid #cca010' : 'none' }}>
@@ -297,7 +296,7 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
           </Button>
           {isEditMode && <Button variant="outlined" color="secondary" onClick={onCancelEdit} disabled={isSubmitting || isDeleting}>ביטול</Button>}
         </Box>
-        
+
         {/* כפתור המחיקה יופיע רק במצב עריכה בצד שמאל */}
         {isEditMode && (
           <Button 

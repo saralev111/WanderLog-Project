@@ -69,4 +69,19 @@ public class TripController {
 
         return ResponseEntity.ok(tripDTOs);
     }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<?> updateTrip(@PathVariable Long id, @RequestBody TripDTO tripDTO, Authentication authentication) {
+        try {
+            // (אופציונלי: אפשר לבדוק כאן שהטיול שייך למשתמש הנוכחי)
+            Trip updatedTrip = tripService.updateTrip(id, tripDTO);
+
+            return ResponseEntity.ok(Map.of(
+                    "message", "הטיול '" + updatedTrip.getTitle() + "' עודכן בהצלחה!"
+            ));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of("error", "שגיאה בעדכון הטיול: " + e.getMessage()));
+        }
+    }
 }

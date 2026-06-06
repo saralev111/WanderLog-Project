@@ -1,9 +1,12 @@
-// src/pages/Home.tsx
 import React, { useState } from 'react';
-import { Box, Typography, Button, Container, CircularProgress, Card, CardContent, CardMedia } from '@mui/material';
+import { Box, Typography, Button, Container, CircularProgress, Card, CardContent, CardMedia, CardActions } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { useGetPublicEntriesQuery } from '../app/api/journalApi';
-import { useSelector } from 'react-redux'; // הוספנו את הייבוא הזה
+import { useDispatch, useSelector } from 'react-redux';
+import { toggleRouteEntry } from '../features/routeSlice';
+import type { RootState } from '../features/store';
+import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
+import PlaylistAddCheckIcon from '@mui/icons-material/PlaylistAddCheck';
 
 export default function Home() {
   const [page, setPage] = useState(0);
@@ -12,6 +15,10 @@ export default function Home() {
   
   // שואבים את הסטטוס: האם המשתמש מחובר?
   const isAuthenticated = useSelector((state: any) => state.auth.isAuthenticated);
+  
+  // הגדרות עבור כפתור המסלול (Route)
+  const dispatch = useDispatch();
+  const selectedRouteEntries = useSelector((state: RootState) => state.route.selectedEntries);
 
   const handleNextPage = () => {
     if (data?.content?.length === size) {
@@ -36,7 +43,7 @@ export default function Home() {
           flexDirection: 'column',
           alignItems: 'center',
           textAlign: 'center',
-          backgroundImage: 'url("/journal-bg.png")', // וידאתי שזה משתמש בקובץ הקיים שלך
+          backgroundImage: 'url("/journal-bg.png")',
           backgroundSize: 'cover',
           backgroundPosition: 'center 30%',
           position: 'relative',
@@ -60,7 +67,7 @@ export default function Home() {
             size="large" 
             sx={{ px: 5, py: 1.5, fontSize: '1.2rem', borderRadius: '30px' }}
           >
-            {isAuthenticated ? 'היכנסו ליומני המסע שלכם' : 'התחילו את היומן שלכם'}
+            {isAuthenticated ? 'היכנס ליומני המסע שלך' : 'התחל את היומן שלך'}
           </Button>
 
         </Container>
@@ -75,7 +82,7 @@ export default function Home() {
         {(isLoading || isFetching) && <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}><CircularProgress color="success" /></Box>}
         {error && <Typography color="error" align="center" sx={{ my: 4, fontWeight: 'bold' }}>שגיאה בטעינת היומנים. ודאו שהשרת פועל.</Typography>}
 
-        {/* רשת הכרטיסיות המשודרגת */}
+        {/* רשת הכרטיסיות */}
         <Box
           sx={{
             display: 'grid',
@@ -83,7 +90,10 @@ export default function Home() {
             gap: 4
           }}
         >
-          {data?.content?.map((entry: any) => (
+          {data?.content?.map((entry: any) => {
+             const isSelected = selectedRouteEntries.some(e => e.id === entry.id);
+
+             return (
             <Card
               key={entry.id}
               elevation={0}
@@ -110,7 +120,7 @@ export default function Home() {
                 sx={{ objectFit: 'cover' }}
               />
               
-              <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 3 }}>
+              <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 3, pb: 0 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
                   <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#2E4835', lineHeight: 1.3 }}>
                     {entry.title || 'מסע ללא כותרת'}
@@ -129,8 +139,38 @@ export default function Home() {
                     : 'אין תיאור ליומן זה.'}
                 </Typography>
               </CardContent>
+
+              {/* הכפתור החדש */}
+              <CardActions sx={{ p: 3, pt: 1 }}>
+                <Button 
+                  fullWidth
+                  variant={isSelected ? "contained" : "outlined"}
+                  onClick={() => dispatch(toggleRouteEntry({
+                    id: entry.id,
+                    title: entry.title,
+                    location: {
+                      latitude: entry.location?.latitude || 0,
+                      longitude: entry.location?.longitude || 0,
+                      name: entry.location?.name
+                    }
+                  }))}
+                  sx={{ 
+                    borderRadius: '20px',
+                    borderColor: '#305031',
+                    color: isSelected ? '#fff' : '#305031',
+                    backgroundColor: isSelected ? '#305031' : 'transparent',
+                    '&:hover': {
+                       backgroundColor: isSelected ? '#243b25' : 'rgba(48, 80, 49, 0.08)',
+                       borderColor: '#305031'
+                    }
+                  }}
+                  startIcon={isSelected ? <PlaylistAddCheckIcon /> : <PlaylistAddIcon />}
+                >
+                  {isSelected ? 'נמצא במסלול' : 'הוסף למסלול'}
+                </Button>
+              </CardActions>
             </Card>
-          ))}
+          )})}
         </Box>
 
         {data?.content?.length === 0 && !isLoading && (
@@ -138,35 +178,13 @@ export default function Home() {
             <Typography variant="h6" sx={{ color: '#2E4835' }}>
               אין עדיין יומנים פומביים במערכת. 🌍
             </Typography>
-            <Typography sx={{ color: '#666', mt: 1 }}>
-              היכנסו לאזור האישי שלכם ותהיו הראשונים לשתף את העולם במסעות שלכם!
-            </Typography>
           </Box>
         )}
 
-        {/* אזור כפתורי הדפדוף מעוצב יותר */}
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 3, mt: 8 }}>
-          <Button 
-            variant="outlined" 
-            disabled={page === 0 || isFetching} 
-            onClick={handlePrevPage}
-            sx={{ borderRadius: '20px', px: 3, color: '#2E4835', borderColor: '#2E4835' }}
-          >
-            לעמוד הקודם
-          </Button>
-          
-          <Typography sx={{ fontWeight: 'bold', color: '#cca010', backgroundColor: '#fff', px: 2, py: 0.5, borderRadius: '12px', border: '1px solid #cca010' }}>
-            עמוד {page + 1}
-          </Typography>
-          
-          <Button 
-            variant="outlined" 
-            disabled={data?.content?.length < size || isFetching} 
-            onClick={handleNextPage}
-            sx={{ borderRadius: '20px', px: 3, color: '#2E4835', borderColor: '#2E4835' }}
-          >
-            לעמוד הבא
-          </Button>
+          <Button variant="outlined" disabled={page === 0 || isFetching} onClick={handlePrevPage} sx={{ borderRadius: '20px', px: 3, color: '#2E4835', borderColor: '#2E4835' }}>לעמוד הקודם</Button>
+          <Typography sx={{ fontWeight: 'bold', color: '#cca010', backgroundColor: '#fff', px: 2, py: 0.5, borderRadius: '12px', border: '1px solid #cca010' }}>עמוד {page + 1}</Typography>
+          <Button variant="outlined" disabled={data?.content?.length < size || isFetching} onClick={handleNextPage} sx={{ borderRadius: '20px', px: 3, color: '#2E4835', borderColor: '#2E4835' }}>לעמוד הבא</Button>
         </Box>
 
       </Container>

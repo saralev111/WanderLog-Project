@@ -1,5 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
+
 // המבנה של יעד במסלול - אנחנו צריכים בעיקר את המזהה, השם, והמיקום כדי לצייר על המפה
 export interface RouteEntry {
   id: number;
@@ -36,12 +37,16 @@ const routeSlice = createSlice({
     updateRouteOrder: (state, action: PayloadAction<RouteEntry[]>) => {
       state.selectedEntries = action.payload;
     },
-    // ניקוי המסלול לחלוטין
+    // ניקוי המסלול לחלוטין - יקרה רק אחרי שמירה מוצלחת!
     clearRoute: (state) => {
       state.selectedEntries = [];
+    },
+    // הפונקציה שהייתה חסרה! טוענת את התחנות כשאנחנו עורכים טיול קיים
+    loadTripForEdit: (state, action: PayloadAction<RouteEntry[]>) => {
+      state.selectedEntries = action.payload;
     }
   },
 });
 
-export const { toggleRouteEntry, updateRouteOrder, clearRoute } = routeSlice.actions;
+export const { toggleRouteEntry, updateRouteOrder, clearRoute, loadTripForEdit } = routeSlice.actions;
 export default routeSlice.reducer;
