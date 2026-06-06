@@ -14,11 +14,11 @@ const Dashboard = () => {
   const [editingEntry, setEditingEntry] = useState<any | null>(null);
 
   const { data: entriesData, isLoading, isError } = useGetMyEntriesQuery(undefined);
-  
+
   // הגדרות Redux עבור סל היעדים
   const dispatch = useDispatch();
   const selectedRouteEntries = useSelector((state: RootState) => state.route.selectedEntries);
-  
+
   if (isError) {
     return (
       <Box sx={{ p: 4, textAlign: 'center' }}>
@@ -35,9 +35,9 @@ const Dashboard = () => {
     new Set(
       myEntriesArray
         .map((entry: any) => entry.location?.country)
-        .filter(Boolean) 
+        .filter(Boolean)
     )
-  ).sort() as string[]; 
+  ).sort() as string[];
 
   let filteredEntries = myEntriesArray;
   if (searchParams.type === 'country') {
@@ -46,7 +46,7 @@ const Dashboard = () => {
     filteredEntries = myEntriesArray.filter((entry: any) => entry.rating >= Number(searchParams.value));
   } else if (searchParams.type === 'keyword') {
     const lowerKeyword = searchParams.value.toLowerCase();
-    filteredEntries = myEntriesArray.filter((entry: any) => 
+    filteredEntries = myEntriesArray.filter((entry: any) =>
       (entry.title && entry.title.toLowerCase().includes(lowerKeyword)) ||
       (entry.description && entry.description.toLowerCase().includes(lowerKeyword))
     );
@@ -80,24 +80,24 @@ const Dashboard = () => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 4, p: 4, maxWidth: 1200, margin: 'auto' }}>
-      
+
       <Box sx={{ flex: 1 }}>
-        <JournalForm 
-          editData={editingEntry} 
-          onCancelEdit={() => setEditingEntry(null)} 
+        <JournalForm
+          editData={editingEntry}
+          onCancelEdit={() => setEditingEntry(null)}
         />
       </Box>
 
       <Box sx={{ flex: 1.5 }}>
         <Typography variant="h4" sx={{ mb: 2, fontWeight: 'bold', color: '#532E15' }}>
-            יומני המסע שלי 
+          יומני המסע שלי
         </Typography>
 
-        <FilterBar 
-          availableCountries={uniqueCountries} 
-          onSearch={(type, value) => setSearchParams({ type, value })} 
+        <FilterBar
+          availableCountries={uniqueCountries}
+          onSearch={(type, value) => setSearchParams({ type, value })}
         />
-        
+
         {isLoading ? (
           <Typography align="center" sx={{ mt: 4 }}>טוען את יומני המסע שלך...</Typography>
         ) : countries.length === 0 ? (
@@ -106,8 +106,8 @@ const Dashboard = () => {
               לא נמצאו יומני מסע
             </Typography>
             <Typography sx={{ mt: 1, color: '#666' }}>
-              {searchParams.type !== 'none' 
-                ? 'לא נמצאו חוויות התואמות את מסנני החיפוש שהגדרת. נסי לנקות את הסינון.' 
+              {searchParams.type !== 'none'
+                ? 'לא נמצאו חוויות התואמות את מסנני החיפוש שהגדרת. נסי לנקות את הסינון.'
                 : 'זה הזמן להתחיל לתעד או לתכנן את הטיול הבא שלך בטופס מימין!'}
             </Typography>
           </Box>
@@ -117,13 +117,13 @@ const Dashboard = () => {
               <Typography variant="h5" sx={{ borderBottom: '3px solid #305031', pb: 0.5, mb: 2, display: 'inline-block', fontWeight: 'bold', color: '#305031' }}>
                 {country}
               </Typography>
-              
+
               <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
                 {groupedEntries[country].map((entry: any) => (
                   <li key={entry.id} style={{ padding: '14px 0', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    
+
                     <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flex: 1, pr: 2 }}>
-                      
+
                       {entry.imageUrl ? (
                         <Box
                           component="img"
@@ -148,14 +148,14 @@ const Dashboard = () => {
                         )}
                       </Box>
                     </Box>
-                    
+
                     {/* אזור הכפתורים והסטטוס המעודכן */}
                     <Box sx={{ textAlign: 'left', minWidth: '150px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
                       <Box sx={{ textAlign: 'left' }}>
                         <Typography variant="body2" sx={{ fontWeight: 'bold', color: entry.status === 'VISITED' ? '#305031' : '#cca010' }}>
                           {entry.status === 'VISITED' ? 'ביקרתי שם' : 'ברשימת המשאלות'}
                         </Typography>
-                        
+
                         {entry.status === 'VISITED' ? (
                           <Typography variant="caption" color="textSecondary" sx={{ display: 'block' }}>
                             דירוג: {'★'.repeat(entry.rating || 5)}{'☆'.repeat(5 - (entry.rating || 5))}
@@ -166,11 +166,11 @@ const Dashboard = () => {
                           </Typography>
                         )}
                       </Box>
-                      
+
                       <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
-                        <Button 
-                          size="small" 
-                          variant="text" 
+                        <Button
+                          size="small"
+                          variant="text"
                           onClick={() => handleEditClick(entry)}
                           sx={{ color: '#cca010', fontWeight: 'bold', minWidth: 'auto', p: 0, '&:hover': { color: '#b08a0e' } }}
                         >
@@ -178,8 +178,8 @@ const Dashboard = () => {
                         </Button>
 
                         {/* כפתור הוספה למסלול (הסל קניות שלנו) */}
-                        <Button 
-                          size="small" 
+                        <Button
+                          size="small"
                           variant={selectedRouteEntries.some(e => e.id === entry.id) ? "contained" : "outlined"}
                           color={selectedRouteEntries.some(e => e.id === entry.id) ? "success" : "primary"}
                           onClick={() => dispatch(toggleRouteEntry({
@@ -187,10 +187,10 @@ const Dashboard = () => {
                             title: entry.title,
                             location: entry.location
                           }))}
-                          sx={{ 
-                            borderRadius: '20px', 
-                            textTransform: 'none', 
-                            p: '2px 8px', 
+                          sx={{
+                            borderRadius: '20px',
+                            textTransform: 'none',
+                            p: '2px 8px',
                             fontSize: '0.75rem',
                             backgroundColor: selectedRouteEntries.some(e => e.id === entry.id) ? '#305031' : 'transparent',
                             borderColor: '#305031',

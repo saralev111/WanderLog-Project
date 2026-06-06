@@ -235,20 +235,20 @@ export default function Explore() {
     return (
         <Box sx={{ p: 4, maxWidth: 1200, mx: 'auto', minHeight: '85vh' }}>
             <Typography variant="h3" sx={{ mb: 4, fontWeight: 'bold', color: '#532E15', fontFamily: '"Caveat", cursive', textAlign: 'right' }}>
-                כל הטיולים של הקהילה
+                הטיולים שלי
             </Typography>
 
             {trips && trips.length === 0 ? (
                 <Typography variant="h6" color="text.secondary" sx={{ textAlign: 'right' }}>
-                    עדיין לא נשמרו טיולים במערכת. תהיי הראשונה לתכנן!
+                    עדיין לא נשמרו טיולים במערכת. היה הראשון לתכנן!
                 </Typography>
             ) : (
                 <Grid container spacing={4} sx={{ alignItems: 'flex-start' }}>
-                                        {trips?.map((trip: any) => (
-                    <Grid size={{ xs: 12, sm: 6, md: 4 }} key={trip.id}>
-                        <TripCard trip={trip} />
-                    </Grid>
-                ))}
+                    {trips?.map((trip: any) => (
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }} key={trip.id}>
+                            <TripCard trip={trip} />
+                        </Grid>
+                    ))}
                 </Grid>
             )}
         </Box>

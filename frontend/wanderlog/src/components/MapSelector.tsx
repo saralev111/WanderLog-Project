@@ -8,9 +8,9 @@ import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
 const DefaultIcon = L.icon({
-    iconUrl: icon,
-    shadowUrl: iconShadow,
-    iconAnchor: [12, 41]
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+  iconAnchor: [12, 41]
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
@@ -59,7 +59,7 @@ function LocationMarker({ onLocationSelect, position, setPosition }: LocationMar
       try {
         const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=he`);
         const data = await response.json();
-        
+
         // שולפים את שם המדינה, או את החלק האחרון של הכתובת אם המדינה לא הוגדרה בבירור
         const country = data.address?.country || data.display_name?.split(',').pop()?.trim() || '';
         onLocationSelect(lat, lng, country, data.display_name || '');
@@ -79,7 +79,7 @@ export default function MapSelector({ onLocationSelect, defaultLat, defaultLng }
   const [flyCenter, setFlyCenter] = useState<[number, number] | null>(
     defaultLat && defaultLng ? [defaultLat, defaultLng] : null
   );
-  
+
   useEffect(() => {
     // בוטל האיפוס למרכז המפה פה כדי למנוע קפיצות כשיש default
     if (defaultLat !== undefined && defaultLng !== undefined) {
@@ -87,13 +87,13 @@ export default function MapSelector({ onLocationSelect, defaultLat, defaultLng }
       setFlyCenter([defaultLat, defaultLng]);
     } else {
       setPosition(null);
-      setFlyCenter([31.7683, 35.2137]); 
+      setFlyCenter([31.7683, 35.2137]);
     }
   }, [defaultLat, defaultLng]);
 
   const [value, setValue] = useState<SearchResult | null>(null);
   const [inputValue, setInputValue] = useState('');
-  
+
   const [options, setOptions] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -108,13 +108,12 @@ export default function MapSelector({ onLocationSelect, defaultLat, defaultLng }
     const timeoutId = setTimeout(async () => {
       setLoading(true);
       try {
-        // שדרוג: הוספנו addressdetails=1 כדי שהשרת יחזיר לנו את שם המדינה בנפרד!
         const response = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(inputValue)}&accept-language=he&limit=10&addressdetails=1`
         );
         const data = await response.json();
-        
-        const uniqueResults = data.filter((v: any, i: number, a: any[]) => 
+
+        const uniqueResults = data.filter((v: any, i: number, a: any[]) =>
           a.findIndex(t => (t.display_name === v.display_name)) === i
         );
 
@@ -126,7 +125,7 @@ export default function MapSelector({ onLocationSelect, defaultLat, defaultLng }
       } finally {
         if (active) setLoading(false);
       }
-    }, 600); 
+    }, 600);
 
     return () => {
       active = false;
@@ -140,7 +139,7 @@ export default function MapSelector({ onLocationSelect, defaultLat, defaultLng }
       const lat = parseFloat(newValue.lat);
       const lng = parseFloat(newValue.lon);
       const country = newValue.address?.country || newValue.display_name.split(',').pop()?.trim() || '';
-      
+
       setPosition({ lat, lng });
       setFlyCenter([lat, lng]);
       onLocationSelect(lat, lng, country, newValue.display_name);
@@ -149,7 +148,7 @@ export default function MapSelector({ onLocationSelect, defaultLat, defaultLng }
 
   return (
     <Box sx={{ width: "100%", display: "flex", flexDirection: "column", gap: 1.5 }}>
-      
+
       <Autocomplete
         id="location-autocomplete"
         sx={{ width: '100%' }}
@@ -159,7 +158,7 @@ export default function MapSelector({ onLocationSelect, defaultLat, defaultLng }
         options={options}
         getOptionLabel={(option) => option.display_name || ''}
         isOptionEqualToValue={(option, val) => option.place_id === val.place_id}
-        filterOptions={(opts) => opts} 
+        filterOptions={(opts) => opts}
         autoComplete
         includeInputInList
         filterSelectedOptions
@@ -175,7 +174,7 @@ export default function MapSelector({ onLocationSelect, defaultLat, defaultLng }
             <TextField
               {...restParams}
               size="small"
-              label="חפשי מיקום (לדיוק מירבי הפרידי בפסיק, למשל: נוף כנרת, צפת)..."
+              label="חפש מיקום (לדיוק מירבי הפרד בפסיק, למשל: נוף כנרת, צפת)..."
               fullWidth
               slotProps={{
                 ...restParams.slotProps,

@@ -3,12 +3,16 @@ import React, { useState } from 'react';
 import { Box, Typography, Button, Container, CircularProgress, Card, CardContent, CardMedia } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { useGetPublicEntriesQuery } from '../app/api/journalApi';
+import { useSelector } from 'react-redux'; // הוספנו את הייבוא הזה
 
 export default function Home() {
   const [page, setPage] = useState(0);
   const size = 6;
   const { data, isLoading, error, isFetching } = useGetPublicEntriesQuery({ page: page, size: size });
   
+  // שואבים את הסטטוס: האם המשתמש מחובר?
+  const isAuthenticated = useSelector((state: any) => state.auth.isAuthenticated);
+
   const handleNextPage = () => {
     if (data?.content?.length === size) {
       setPage(page + 1);
@@ -47,9 +51,18 @@ export default function Home() {
           <Typography variant="h6" sx={{ color: '#3A312A', mb: 4, fontFamily: '"Assistant", sans-serif', fontWeight: 600 }}>
             הצטרפו לקהילת המטיילים של WanderLog. תכננו את המסלול המושלם ושימרו את הזיכרונות שלכם ביומן מסע דיגיטלי בעיצוב אישי.
           </Typography>
-          <Button component={RouterLink} to="/register" variant="contained" size="large" sx={{ px: 5, py: 1.5, fontSize: '1.2rem', borderRadius: '30px' }}>
-            התחילו את היומן שלכם
+          
+          {/* הכפתור החכם שלנו */}
+          <Button 
+            component={RouterLink} 
+            to={isAuthenticated ? "/dashboard" : "/register"} 
+            variant="contained" 
+            size="large" 
+            sx={{ px: 5, py: 1.5, fontSize: '1.2rem', borderRadius: '30px' }}
+          >
+            {isAuthenticated ? 'היכנסו ליומני המסע שלכם' : 'התחילו את היומן שלכם'}
           </Button>
+
         </Container>
       </Box>
 
@@ -85,34 +98,29 @@ export default function Home() {
                 border: '1px solid rgba(0,0,0,0.05)',
                 '&:hover': { 
                   transform: 'translateY(-8px)', 
-                  boxShadow: '0 16px 32px rgba(48, 80, 49, 0.15)' // הצללה ירקרקה עדינה
+                  boxShadow: '0 16px 32px rgba(48, 80, 49, 0.15)' 
                 }
               }}
             >
-              {/* החלק של התמונה */}
               <CardMedia
                 component="img"
                 height="220"
-                // אם יש תמונה מהשרת נציג אותה, אחרת נציג את תמונת הרקע שיש לך בתיקייה
                 image={entry.imageUrl ? `http://localhost:9090${entry.imageUrl}` : '/journal-bg.png'}
                 alt={entry.title}
                 sx={{ objectFit: 'cover' }}
               />
               
               <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 3 }}>
-                {/* אזור כותרת ודירוג */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
                   <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#2E4835', lineHeight: 1.3 }}>
                     {entry.title || 'מסע ללא כותרת'}
                   </Typography>
                 </Box>
 
-                {/* מיקום המדינה והעיר מודגש בזהב/חרדל */}
                 <Typography variant="subtitle2" sx={{ color: '#cca010', fontWeight: 'bold', display: 'flex', alignItems: 'center', mb: 2 }}>
                   📍 {entry.location?.country || 'לא צוינה מדינה'} {entry.location?.name ? `- ${entry.location.name}` : ''}
                 </Typography>
 
-                {/* תיאור עם חיתוך טקסט אוטומטי אם הוא ארוך מדי */}
                 <Typography variant="body2" sx={{ color: '#5C5850', lineHeight: 1.6, flexGrow: 1 }}>
                   {entry.description 
                     ? entry.description.length > 110 

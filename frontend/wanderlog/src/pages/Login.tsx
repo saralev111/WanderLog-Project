@@ -21,11 +21,9 @@ export default function Login() {
       // 2. לכן אנחנו צריכים לשלוף את הטוקן מתוך "result"
       dispatch(setCredentials({ 
         token: result.token, 
-        username: data.userName // כאן שמנו N גדולה, בדיוק כמו השם של השדה בטופס
+        username: data.userName 
       }));
 
-      alert('התחברת בהצלחה!');
-      // הורדתי כאן את ההערה כדי שהמשתמש באמת יעבור אוטומטית ללוח הבקרה שלך אחרי התחברות מוצלחת!
       navigate('/dashboard'); 
       
     } catch (err) {
@@ -40,7 +38,6 @@ export default function Login() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        // שימוש בתמונה המהממת שלך כרקע הראשי
         backgroundImage:'url("/journal-bg.jpg")',
         backgroundSize: 'cover',
         backgroundPosition: 'center center',
@@ -55,12 +52,11 @@ export default function Login() {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            // אפקט זכוכית בצבע קרם שמאפשר לציור לבלוט מאחור
             backgroundColor: 'rgba(246, 244, 235, 0.85)',
             backdropFilter: 'blur(6px)',
             borderRadius: '16px',
             border: '1px solid rgba(140, 125, 111, 0.3)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)' // צללית עדינה כדי להקפיץ את הטופס החוצה
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)' 
           }}
         >
           {/* לוגו עם המצפן */}

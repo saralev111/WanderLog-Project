@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { useCreateEntryMutation, useCreateEntryWithImageMutation, useUpdateEntryMutation, useUpdateEntryWithImageMutation,useDeleteEntryMutation } from '../app/api/journalApi';
-import { TextField, Button, Box, Typography, Rating, FormControl, InputLabel, Select, MenuItem, Switch, FormControlLabel } from '@mui/material';
+import { useCreateEntryMutation, useCreateEntryWithImageMutation, useUpdateEntryMutation, useUpdateEntryWithImageMutation, useDeleteEntryMutation } from '../app/api/journalApi';
+import { 
+  TextField, Button, Box, Typography, Rating, FormControl, 
+  InputLabel, Select, MenuItem, Switch, FormControlLabel,
+  Snackbar, Alert, Dialog, DialogTitle, DialogContent, 
+  DialogContentText, DialogActions 
+} from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import MapSelector from './MapSelector';
-
 
 // הגדרנו שדה נפרד לשם המקום (placeName) ושדה למדינה (country) שהמפה תמלא ברקע
 interface JournalFormInputs {
@@ -30,10 +34,21 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
     defaultValues: { title: '', description: '', placeName: '', country: '', date: new Date().toISOString().split('T')[0], rating: 5, status: 'VISITED', isPublic: false }
   });
 
+  // סטייטים להודעות קופצות
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+  
+  // סטייט לחלון אישור מחיקה
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
   const currentStatus = watch('status');
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [deleteEntry, { isLoading: isDeleting }] = useDeleteEntryMutation();
+
   const [createEntry, { isLoading: isCreating }] = useCreateEntryMutation();
+  const [deleteEntry, { isLoading: isDeleting }] = useDeleteEntryMutation();
   const [createEntryWithImage, { isLoading: isCreatingWithImage }] = useCreateEntryWithImageMutation();
   const [updateEntry, { isLoading: isUpdating }] = useUpdateEntryMutation();
   const [updateEntryWithImage, { isLoading: isUpdatingWithImage }] = useUpdateEntryWithImageMutation();
@@ -74,15 +89,22 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
     if (e.target.files && e.target.files[0]) setSelectedImage(e.target.files[0]);
   };
 
-  const handleDelete = async () => {
-    if (editData && window.confirm("האם את בטוחה שברצונך למחוק את יומן המסע הזה? פעולה זו בלתי הפיכה.")) {
+  // פונקציה שרק פותחת את דיאלוג המחיקה
+  const handleDeleteClick = () => {
+    setOpenDeleteDialog(true);
+  };
+
+  // פונקציה שמבצעת את המחיקה בפועל
+  const confirmDelete = async () => {
+    setOpenDeleteDialog(false);
+    if (editData) {
       try {
         await deleteEntry(editData.id).unwrap();
-        alert('יומן המסע נמחק בהצלחה!');
-        onCancelEdit(); // סוגר את חלונית העריכה
+        setSnackbar({ open: true, message: 'יומן המסע נמחק בהצלחה!', severity: 'success' });
+        setTimeout(() => onCancelEdit(), 1500); // סוגר את חלונית העריכה אחרי השהייה קלה
       } catch (error) {
         console.error('שגיאה במחיקת היומן:', error);
-        alert('אופס, משהו השתבש במהלך המחיקה.');
+        setSnackbar({ open: true, message: 'אופס, משהו השתבש במהלך המחיקה.', severity: 'error' });
       }
     }
   };
@@ -125,8 +147,8 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
         } else {
           await updateEntry({ id: editData.id, updatedEntry: entryDataForServer }).unwrap();
         }
-        alert('יומן המסע עודכן בהצלחה!');
-        onCancelEdit();
+        setSnackbar({ open: true, message: 'יומן המסע עודכן בהצלחה!', severity: 'success' });
+        setTimeout(() => onCancelEdit(), 1500);
       } else {
         if (selectedImage) {
           const formData = new FormData();
@@ -136,13 +158,13 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
         } else {
           await createEntry(entryDataForServer).unwrap();
         }
-        alert('יומן המסע נשמר בהצלחה!');
+        setSnackbar({ open: true, message: 'יומן המסע נשמר בהצלחה!', severity: 'success' });
         reset();
         setSelectedImage(null);
       }
     } catch (error) {
       console.error('שגיאה בשמירת הנתונים:', error);
-      alert('אופס, משהו השתבש במהלך השמירה.');
+      setSnackbar({ open: true, message: 'אופס, משהו השתבש במהלך השמירה.', severity: 'error' });
     }
   };
 
@@ -213,7 +235,7 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
 
       <Box sx={{ p: 1, border: '1px solid #ccc', borderRadius: '4px' }}>
         <Typography variant="subtitle2" sx={{ mb: 1, color: '#666' }}>
-          בחרי מיקום מדויק על המפה (חיפוש או לחיצה):
+          בחר מיקום מדויק על המפה (חיפוש או לחיצה):
         </Typography>
 
         <Controller
@@ -243,7 +265,7 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
       </Box>
 
       <TextField
-        label={currentStatus === 'VISITED' ? "ספרי על החוויות שלך מהטיול..." : "מה התכנונים שלך לטיול הזה?..."}
+        label={currentStatus === 'VISITED' ? "ספר על החוויות שלך מהטיול..." : "מה התכנונים שלך לטיול הזה?..."}
         variant="outlined"
         multiline
         rows={4}
@@ -252,6 +274,22 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
       />
 
       {/* אזור העלאת התמונה עם התצוגה המקדימה שיצרנו קודם! */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'center', p: 2, border: '1px dashed #ccc', borderRadius: '8px', backgroundColor: '#fafafa' }}>
+        {imagePreviewUrl && (
+          <Box
+            component="img"
+            src={imagePreviewUrl}
+            alt="תצוגה מקדימה"
+            sx={{ width: '100%', maxHeight: 200, objectFit: 'contain', borderRadius: '8px', mb: 1, border: '1px solid #ddd', backgroundColor: '#fff' }}
+          />
+        )}
+        <Button component="label" variant="outlined" startIcon={<CloudUploadIcon />} sx={{ textTransform: 'none' }}>
+          {imagePreviewUrl ? 'החלפת תמונה (אופציונלי)' : 'העלאת תמונה'}
+          <input type="file" hidden accept="image/*" onChange={handleImageChange} />
+        </Button>
+        {selectedImage && <Typography variant="body2" color="success.main" sx={{ mt: 1 }}>נבחרה תמונה חדשה: {selectedImage.name}</Typography>}
+      </Box>
+
       <Box sx={{ display: 'flex', gap: 2, justifyContent: 'space-between', mt: 2 }}>
         <Box sx={{ display: 'flex', gap: 2, flexGrow: 1 }}>
           <Button type="submit" variant="contained" size="large" fullWidth disabled={isSubmitting || isDeleting} sx={{ backgroundColor: isEditMode ? '#cca010' : '#305031', '&:hover': { backgroundColor: isEditMode ? '#b08a0e' : '#437045' }, fontWeight: 'bold' }}>
@@ -265,7 +303,7 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
           <Button 
             variant="outlined" 
             color="error" 
-            onClick={handleDelete}
+            onClick={handleDeleteClick}
             disabled={isSubmitting || isDeleting}
             sx={{ fontWeight: 'bold' }}
           >
@@ -273,6 +311,57 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
           </Button>
         )}
       </Box>
+
+      {/* --- רכיבי הודעות ואישורים --- */}
+      
+      {/* הודעות קופצות - Snackbar */}
+      <Snackbar 
+        open={snackbar.open} 
+        autoHideDuration={4000} 
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert 
+          variant="filled" 
+          onClose={handleCloseSnackbar} 
+          severity={snackbar.severity} 
+          sx={{ width: '100%', fontSize: '1.1rem' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+
+      {/* חלון אישור מחיקה - Dialog */}
+      <Dialog
+        open={openDeleteDialog}
+        onClose={() => setOpenDeleteDialog(false)}
+        // הפתרון לשגיאת ה-TypeScript: עיצוב המחלקה הפנימית ישירות דרך sx
+        sx={{
+          '& .MuiDialog-paper': {
+            backgroundColor: '#ffffff', // מכריח רקע לבן ואטום
+            borderRadius: '12px',
+            boxShadow: '0px 8px 24px rgba(0,0,0,0.2)',
+            padding: 1
+          }
+        }}
+      >
+        <DialogTitle sx={{ color: '#d32f2f', fontWeight: 'bold' }}>
+          {"מחיקת יומן מסע"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ color: '#333', fontSize: '1.1rem' }}>
+            האם אתה בטוח שברצונך למחוק את יומן המסע הזה? פעולה זו היא בלתי הפיכה ולא ניתן יהיה לשחזר את הנתונים.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ padding: 2 }}>
+          <Button onClick={() => setOpenDeleteDialog(false)} color="primary" variant="outlined">
+            ביטול
+          </Button>
+          <Button onClick={confirmDelete} color="error" variant="contained" disabled={isDeleting}>
+            {isDeleting ? 'מוחק...' : 'כן, מחק יומן'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

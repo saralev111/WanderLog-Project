@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button, Paper, List, ListItem, ListItemText, Divider, CircularProgress, IconButton, Tooltip, TextField } from '@mui/material';
+import { Box, Typography, Button, Paper, List, ListItem, ListItemText, Divider, CircularProgress, IconButton, Tooltip, TextField, Snackbar, Alert } from '@mui/material';
 import { useSelector, useDispatch } from 'react-redux';
 import { updateRouteOrder, toggleRouteEntry } from '../features/routeSlice';
 import type { RootState } from '../features/store';
@@ -79,6 +79,13 @@ export default function RoutePlanner() {
   const [tripTitle, setTripTitle] = useState("");
   const [saveTrip, { isLoading: isSaving }] = useSaveTripMutation();
 
+  // State להודעות (Snackbar)
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' | 'warning' });
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -105,9 +112,10 @@ export default function RoutePlanner() {
       const sortedEntries = [...optimizedEntries].sort((a: any, b: any) => a.visitOrder - b.visitOrder);
       const reorderedPlaces = sortedEntries.map((entry: any) => places.find(p => p.id === entry.id)).filter(Boolean);
       dispatch(updateRouteOrder(reorderedPlaces as any));
+      setSnackbar({ open: true, message: 'המסלול חושב וסודר בהצלחה!', severity: 'success' });
     } catch (err) {
       console.error("שגיאה באופטימיזציה:", err);
-      alert("שגיאה בתקשורת מול השרת בעת הפעלת האלגוריתם.");
+      setSnackbar({ open: true, message: 'שגיאה בתקשורת מול השרת בעת הפעלת האלגוריתם.', severity: 'error' });
     }
   };
 
@@ -116,15 +124,17 @@ export default function RoutePlanner() {
       const entryIds = places.map(place => place.id);
       const advice = await getAiAdvice(entryIds).unwrap();
       setAiAdvice(advice);
+      setSnackbar({ open: true, message: 'המלצת ה-AI התקבלה!', severity: 'success' });
     } catch (err) {
       console.error("שגיאה בקבלת ייעוץ AI:", err);
       setAiAdvice("אופס! לא הצלחנו לקבל המלצה מה-AI כרגע. נסו שוב מאוחר יותר.");
+      setSnackbar({ open: true, message: 'שגיאה בקבלת ייעוץ AI.', severity: 'error' });
     }
   };
 
   const handleSaveTrip = async () => {
     if (!tripTitle.trim()) {
-      alert("אנא הזיני שם לטיול לפני השמירה");
+      setSnackbar({ open: true, message: 'אנא הזיני שם לטיול לפני השמירה', severity: 'warning' });
       return;
     }
     try {
@@ -134,11 +144,11 @@ export default function RoutePlanner() {
         journalEntryIds: places.map(p => p.id) 
       }).unwrap();
 
-      alert("הטיול נשמר בהצלחה!");
-      navigate('/explore');
+      setSnackbar({ open: true, message: 'הטיול נשמר בהצלחה!', severity: 'success' });
+      setTimeout(() => navigate('/explore'), 1500); // מעבר עמוד לאחר השהייה קלה
     } catch (err) {
       console.error("שגיאה בשמירת הטיול:", err);
-      alert("אופס, משהו השתבש בשמירת הטיול.");
+      setSnackbar({ open: true, message: 'אופס, משהו השתבש בשמירת הטיול.', severity: 'error' });
     }
   };
 
@@ -205,6 +215,23 @@ export default function RoutePlanner() {
           {places.length > 1 && <Polyline positions={pathCoordinates} pathOptions={{ color: '#cca010' }} />}
         </MapContainer>
       </Box>
+
+      {/* הודעות קופצות - Snackbar */}
+      <Snackbar 
+        open={snackbar.open} 
+        autoHideDuration={4000} 
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity={snackbar.severity} 
+          variant="filled" // מבטיח שההודעה תהיה עם צבע מלא
+          sx={{ width: '100%', fontSize: '1.1rem' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

@@ -24,21 +24,22 @@ function App() {
         {/* אזור התוכן המשתנה */}
         <Box sx={{ flexGrow: 1 }}>
           <Routes>
-            {/* נתיב לדף הבית */}
+            {/* נתיב לדף הבית (פתוח לכולם) */}
             <Route path="/" element={<Home />} />
             
-            {/* נתיבי התחברות והרשמה */}
+            {/* נתיבי התחברות והרשמה (פתוחים לכולם) */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            
+            {/* האזורים האישיים (מוגנים) */}
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
             <Route path="/plan" element={<ProtectedRoute><RoutePlanner /></ProtectedRoute>} />
-            <Route path="/explore" element={<Explore />} />
-            {/* נתיבים עתידיים שניצור:
-            <Route path="/explore" element={<Explore />} />
-            <Route path="/plan" element={<PlanTrip />} />
-            */}
+            
+            {/* התיקון שלנו: עטפנו גם את "כל הטיולים" בהגנה! */}
+            <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
+
           </Routes>
         </Box>
         

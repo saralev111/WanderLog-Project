@@ -1,12 +1,9 @@
 package com.example.wanderlog.Services;
 
-import com.example.wanderlog.Entities.JournalEntry;
-import com.example.wanderlog.Entities.Location; // הוספנו ייבוא
-import com.example.wanderlog.Entities.TravelStatus;
-import com.example.wanderlog.Entities.User;
-import com.example.wanderlog.Entities.UserRole;
+import com.example.wanderlog.Entities.*;
 import com.example.wanderlog.Repositories.JournalEntryRepo;
 import com.example.wanderlog.Repositories.LocationRepo;
+import com.example.wanderlog.Repositories.TripRepo;
 import com.example.wanderlog.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -34,6 +31,9 @@ public class JournalEntryService {
 
     @Autowired
     private LocationRepo locationRepo ;
+
+    @Autowired
+    private TripRepo tripRepo;
 
     @Autowired
     private AiRecommendationService aiRecommendationService;
@@ -153,6 +153,7 @@ public class JournalEntryService {
         return journalEntryRepo.save(existingEntry);
     }
 
+    @org.springframework.transaction.annotation.Transactional // חובה להוסיף כדי שהניתוק והמחיקה יקרו יחד!
     public void deleteEntry(long id) {
         User currentUser = userService.getCurrentUser();
 
@@ -166,6 +167,15 @@ public class JournalEntryService {
             throw new RuntimeException("אין לך הרשאה למחוק יומן זה.");
         }
 
+        // --- התיקון: ניתוק היומן מכל הטיולים שהוא מקושר אליהם ---
+        List<Trip> relatedTrips = tripRepo.findByJournalEntriesContaining(entry);
+        for (Trip trip : relatedTrips) {
+            trip.getJournalEntries().remove(entry);
+            tripRepo.save(trip); // שומרים את הטיול מחדש בלי היומן הזה
+        }
+        // --------------------------------------------------------
+
+        // עכשיו שהיומן לא מקושר לאף טיול, אפשר למחוק אותו בבטחה!
         journalEntryRepo.delete(entry);
     }
 
