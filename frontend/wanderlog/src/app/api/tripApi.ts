@@ -27,6 +27,14 @@ export const tripApi = createApi({
       // 2. אחרי שהשמירה מצליחה, תפסול את התגית "Trip"
       invalidatesTags: ['Trip'], 
     }),
+    updateTrip: builder.mutation<any, { id: number; title: string; journalEntryIds: number[] }>({
+      query: ({ id, ...tripData }) => ({
+        url: `/update/${id}`,
+        method: 'PUT',
+        body: tripData,
+      }),
+      invalidatesTags: ['Trip'], 
+    }),
     
     getTrips: builder.query<any[], void>({
         query: () => '/all',
@@ -36,4 +44,4 @@ export const tripApi = createApi({
   }),
 });
 
-export const { useSaveTripMutation, useGetTripsQuery } = tripApi;
+export const { useSaveTripMutation, useUpdateTripMutation, useGetTripsQuery } = tripApi;

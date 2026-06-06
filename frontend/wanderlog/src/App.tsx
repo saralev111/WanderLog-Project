@@ -35,6 +35,7 @@ function App() {
             <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
             <Route path="/plan" element={<ProtectedRoute><RoutePlanner /></ProtectedRoute>} />
             <Route path="/explore" element={<Explore />} />
+            <Route path="/plan/:tripId" element={<ProtectedRoute><RoutePlanner /></ProtectedRoute>} />
             {/* נתיבים עתידיים שניצור:
             <Route path="/explore" element={<Explore />} />
             <Route path="/plan" element={<PlanTrip />} />

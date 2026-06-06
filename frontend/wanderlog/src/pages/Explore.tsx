@@ -8,7 +8,9 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import RouteIcon from '@mui/icons-material/Route';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import MapIcon from '@mui/icons-material/Map'; // האייקון החדש של המפה!
+import MapIcon from '@mui/icons-material/Map';
+import EditIcon from '@mui/icons-material/Edit'; // ייבוא האייקון של העריכה
+import { useNavigate } from 'react-router-dom'; // ייבוא הניווט
 
 // אייקון ממוספר קטן למפת התצוגה המקדימה
 const createMiniNumberedIcon = (number: number) => {
@@ -33,6 +35,7 @@ const MiniMapBounds = ({ coords }: { coords: [number, number][] }) => {
 // רכיב כרטיסיית הטיול הבודד
 function TripCard({ trip }: { trip: any }) {
     const [expanded, setExpanded] = useState(false);
+    const navigate = useNavigate(); // הגדרת משתנה הניווט
 
     // מיון התחנות לפי סדר הביקור (visitOrder)
     const sortedEntries = trip.journalEntries
@@ -124,7 +127,28 @@ function TripCard({ trip }: { trip: any }) {
                     </Box>
                 )}
 
-                <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'center', pt: 1 }}>
+                <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', pt: 1 }}>
+                    {/* הכפתור החדש - מעבר לעריכת המסלול */}
+                    <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => navigate(`/plan/${trip.id}`)}
+                        startIcon={<EditIcon />}
+                        sx={{
+                            color: '#cca010',
+                            borderColor: '#cca010',
+                            borderRadius: '20px',
+                            fontWeight: 'bold',
+                            textTransform: 'none',
+                            '&:hover': {
+                                backgroundColor: 'rgba(204, 160, 16, 0.1)',
+                                borderColor: '#b08a0e'
+                            }
+                        }}
+                    >
+                        ערוך מסלול
+                    </Button>
+
                     <Button
                         size="small"
                         variant="outlined"
@@ -139,7 +163,7 @@ function TripCard({ trip }: { trip: any }) {
                             '&:hover': { backgroundColor: 'rgba(48, 80, 49, 0.05)', borderColor: '#305031' }
                         }}
                     >
-                        {sortedEntries.length === 0 ? 'אין מסלול זמין' : (expanded ? 'הסתר מסלול מלא' : 'הצג מסלול מלא')}
+                        {sortedEntries.length === 0 ? 'אין מסלול' : (expanded ? 'הסתר מסלול' : 'הצג מסלול')}
                     </Button>
                 </Box>
 
@@ -147,7 +171,6 @@ function TripCard({ trip }: { trip: any }) {
                     <Box sx={{ mt: 2, textAlign: 'right', display: 'flex', flexDirection: 'column', gap: 2 }}>
                         <Divider />
 
-                        {/* הכפתור החדש והמשודרג של גוגל מפות */}
                         {googleMapsUrl && (
                             <Button
                                 variant="contained"
@@ -157,7 +180,7 @@ function TripCard({ trip }: { trip: any }) {
                                 startIcon={<MapIcon />}
                                 endIcon={<OpenInNewIcon sx={{ fontSize: 16 }} />}
                                 sx={{
-                                    backgroundColor: '#4285F4', // הצבע הרשמי של כפתורי Google
+                                    backgroundColor: '#4285F4',
                                     color: 'white',
                                     borderRadius: '24px',
                                     py: 1,
@@ -165,7 +188,7 @@ function TripCard({ trip }: { trip: any }) {
                                     fontWeight: 'bold',
                                     fontSize: '1rem',
                                     boxShadow: '0 4px 10px rgba(66, 133, 244, 0.3)',
-                                    '&:hover': { backgroundColor: '#3367D6' } // גוון קצת יותר כהה במעבר עכבר
+                                    '&:hover': { backgroundColor: '#3367D6' }
                                 }}
                             >
                                 פתח מסלול ב- Google Maps
@@ -244,11 +267,11 @@ export default function Explore() {
                 </Typography>
             ) : (
                 <Grid container spacing={4} sx={{ alignItems: 'flex-start' }}>
-                                        {trips?.map((trip: any) => (
-                    <Grid size={{ xs: 12, sm: 6, md: 4 }} key={trip.id}>
-                        <TripCard trip={trip} />
-                    </Grid>
-                ))}
+                    {trips?.map((trip: any) => (
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }} key={trip.id}>
+                            <TripCard trip={trip} />
+                        </Grid>
+                    ))}
                 </Grid>
             )}
         </Box>

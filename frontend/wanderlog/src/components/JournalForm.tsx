@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { useCreateEntryMutation, useCreateEntryWithImageMutation, useUpdateEntryMutation, useUpdateEntryWithImageMutation,useDeleteEntryMutation } from '../app/api/journalApi';
+import { useCreateEntryMutation, useCreateEntryWithImageMutation, useUpdateEntryMutation, useUpdateEntryWithImageMutation, useDeleteEntryMutation } from '../app/api/journalApi';
 import { TextField, Button, Box, Typography, Rating, FormControl, InputLabel, Select, MenuItem, Switch, FormControlLabel } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import MapSelector from './MapSelector';
-
 
 // הגדרנו שדה נפרד לשם המקום (placeName) ושדה למדינה (country) שהמפה תמלא ברקע
 interface JournalFormInputs {
@@ -13,8 +12,8 @@ interface JournalFormInputs {
   date: string;
   rating: number;
   status: 'VISITED' | 'WISHLIST';
-  placeName: string; 
-  country: string;   
+  placeName: string;
+  country: string;
   latitude?: number;
   longitude?: number;
   isPublic: boolean;
@@ -32,12 +31,13 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
 
   const currentStatus = watch('status');
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [deleteEntry, { isLoading: isDeleting }] = useDeleteEntryMutation();
+
   const [createEntry, { isLoading: isCreating }] = useCreateEntryMutation();
+  const [deleteEntry, { isLoading: isDeleting }] = useDeleteEntryMutation();
   const [createEntryWithImage, { isLoading: isCreatingWithImage }] = useCreateEntryWithImageMutation();
   const [updateEntry, { isLoading: isUpdating }] = useUpdateEntryMutation();
   const [updateEntryWithImage, { isLoading: isUpdatingWithImage }] = useUpdateEntryWithImageMutation();
-  
+
   const isEditMode = !!editData;
 
   useEffect(() => {
@@ -73,7 +73,6 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) setSelectedImage(e.target.files[0]);
   };
-
   const handleDelete = async () => {
     if (editData && window.confirm("האם את בטוחה שברצונך למחוק את יומן המסע הזה? פעולה זו בלתי הפיכה.")) {
       try {
@@ -86,14 +85,12 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
       }
     }
   };
-
   const onSubmit = async (data: JournalFormInputs) => {
     try {
       const isLocationChanged =
         isEditMode &&
         editData?.location &&
         (data.latitude !== editData.location.latitude || data.longitude !== editData.location.longitude);
-
       // מרכיבים את המיקום בצורה חכמה: המדינה מהמפה, והשם מהשדה שהמשתמש הקליד
       const finalLocation = {
         country: data.country || 'לא צוינה מדינה',
@@ -152,8 +149,8 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
   const imagePreviewUrl = selectedImage
     ? URL.createObjectURL(selectedImage)
     : editData?.imageUrl
-    ? `http://localhost:9090${editData.imageUrl}`
-    : null;
+      ? `http://localhost:9090${editData.imageUrl}`
+      : null;
 
   return (
     <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, maxWidth: 500, margin: 'auto', p: 3, boxShadow: '0px 4px 12px rgba(0,0,0,0.1)', borderRadius: '12px', backgroundColor: '#fff', border: isEditMode ? '2px solid #cca010' : 'none' }}>
@@ -252,6 +249,22 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
       />
 
       {/* אזור העלאת התמונה עם התצוגה המקדימה שיצרנו קודם! */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'center', p: 2, border: '1px dashed #ccc', borderRadius: '8px', backgroundColor: '#fafafa' }}>
+        {imagePreviewUrl && (
+          <Box
+            component="img"
+            src={imagePreviewUrl}
+            alt="תצוגה מקדימה"
+            sx={{ width: '100%', maxHeight: 200, objectFit: 'contain', borderRadius: '8px', mb: 1, border: '1px solid #ddd', backgroundColor: '#fff' }}
+          />
+        )}
+        <Button component="label" variant="outlined" startIcon={<CloudUploadIcon />} sx={{ textTransform: 'none' }}>
+          {imagePreviewUrl ? 'החלפת תמונה (אופציונלי)' : 'העלאת תמונה'}
+          <input type="file" hidden accept="image/*" onChange={handleImageChange} />
+        </Button>
+        {selectedImage && <Typography variant="body2" color="success.main" sx={{ mt: 1 }}>נבחרה תמונה חדשה: {selectedImage.name}</Typography>}
+      </Box>
+
       <Box sx={{ display: 'flex', gap: 2, justifyContent: 'space-between', mt: 2 }}>
         <Box sx={{ display: 'flex', gap: 2, flexGrow: 1 }}>
           <Button type="submit" variant="contained" size="large" fullWidth disabled={isSubmitting || isDeleting} sx={{ backgroundColor: isEditMode ? '#cca010' : '#305031', '&:hover': { backgroundColor: isEditMode ? '#b08a0e' : '#437045' }, fontWeight: 'bold' }}>
@@ -259,12 +272,12 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
           </Button>
           {isEditMode && <Button variant="outlined" color="secondary" onClick={onCancelEdit} disabled={isSubmitting || isDeleting}>ביטול</Button>}
         </Box>
-        
+
         {/* כפתור המחיקה יופיע רק במצב עריכה בצד שמאל */}
         {isEditMode && (
-          <Button 
-            variant="outlined" 
-            color="error" 
+          <Button
+            variant="outlined"
+            color="error"
             onClick={handleDelete}
             disabled={isSubmitting || isDeleting}
             sx={{ fontWeight: 'bold' }}
