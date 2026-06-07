@@ -1,6 +1,6 @@
 import React from 'react';
 import { AppBar, Toolbar, Typography, Button, Box, IconButton, Badge } from '@mui/material';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import type { RootState } from '../features/store';
 import { logout } from '../features/authSlice';
@@ -19,6 +19,7 @@ export default function Navbar() {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     dispatch(logout());
@@ -83,7 +84,6 @@ export default function Navbar() {
             תכנון טיול חדש
           </Button>
 
-          {/* קישורים שמוצגים רק למחוברים */}
           {isAuthenticated && (
             <>
               {role === 'ROLE_ADMIN' && (
@@ -131,10 +131,22 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Button component={RouterLink} to="/login" color="inherit" sx={{ fontWeight: 'bold' }}>
+              <Button
+                component={RouterLink}
+                to="/login"
+                variant={location.pathname === '/login' ? 'contained' : 'outlined'}
+                disableElevation
+                sx={{ fontWeight: 'bold' }}
+              >
                 התחברות
               </Button>
-              <Button component={RouterLink} to="/register" variant="contained" disableElevation sx={{ ml: 1 }}>
+              <Button
+                component={RouterLink}
+                to="/register"
+                variant={location.pathname === '/register' ? 'contained' : 'outlined'}
+                disableElevation
+                sx={{ ml: 1 }}
+              >
                 הרשמה
               </Button>
             </>
