@@ -5,7 +5,7 @@ export const adminApi = createApi({
   reducerPath: 'adminApi',
   baseQuery: fetchBaseQuery({
     // נתיב הבסיס כפי שהגדרת במשימה
-baseUrl: 'http://localhost:9090/api/admin',
+    baseUrl: 'http://localhost:9090/api/admin',
     prepareHeaders: (headers, { getState }) => {
       // אנחנו מוסיפים את הטוקן לכל בקשה, כי רק מנהלים מחוברים רשאים לגשת לכאן!
       const token = (getState() as RootState).auth.token;
@@ -20,17 +20,17 @@ baseUrl: 'http://localhost:9090/api/admin',
     // קריאה לשליפת כל המשתמשים
     getAllUsers: builder.query({
       query: () => '/users',
-      providesTags: ['Users'], 
+      providesTags: ['Users'],
     }),
-    
+
     // קריאה למחיקת משתמש (מוכנה מראש לחלק הבא שלנו)
     deleteUser: builder.mutation({
       query: (userId: number) => ({
-        url: `/users/${userId}`,
+        url: `/user/${userId}`,
         method: 'DELETE',
       }),
       // הקסם: אחרי מחיקה, אנו "שוברים" את התג כדי שהטבלה תתרענן לבד!
-      invalidatesTags: ['Users'], 
+      invalidatesTags: ['Users'],
     }),
   }),
 });

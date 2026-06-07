@@ -1,45 +1,46 @@
 import React from 'react';
-import { AppBar, Toolbar, Typography, Button, Box, IconButton } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, IconButton, Badge } from '@mui/material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import type { RootState } from '../features/store';
 import { logout } from '../features/authSlice';
 import ExploreIcon from '@mui/icons-material/Explore';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import { Badge } from '@mui/material';
-import AltRouteIcon from '@mui/icons-material/AltRoute'; // אייקון שמתאים למסלול
+import AltRouteIcon from '@mui/icons-material/AltRoute';
 
-// --- התוספות לניקוי הזיכרון של השרת ---
 import { journalApi } from '../app/api/journalApi';
 import { tripApi } from '../app/api/tripApi';
 
 export default function Navbar() {
-  // קריאת מצב ההתחברות ושם המשתמש מתוך ה-Redux המשודרג שלנו
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
-  const username = useSelector((state: RootState) => state.auth.username); // התוספת החדשה!
+  const username = useSelector((state: RootState) => state.auth.username);
+  const role = useSelector((state: RootState) => state.auth.role);
   const selectedEntriesCount = useSelector((state: RootState) => state.route.selectedEntries.length);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // 1. ניקוי המשתמש והטוקן מה-Redux המקומי
     dispatch(logout());
-    
-    // 2. הפקודות שמשמידות את הנתונים (Cache) הקודמים מ-RTK Query
     dispatch(journalApi.util.resetApiState());
     dispatch(tripApi.util.resetApiState());
+    navigate('/');
+  };
 
-    // 3. חזרה לדף הבית אחרי התנתקות
-    navigate('/'); 
+  const navButtonSx = {
+    fontSize: '1.1rem',
+    fontWeight: 'normal',
+    color: 'inherit',
+    borderRadius: '20px',
+    px: 2,
   };
 
   return (
     <AppBar
       position="sticky"
-      elevation={0} // סרגל שטוח ללא צל כבד כדי לשמור על מראה "נייר"
+      elevation={0}
       sx={{
-        backgroundColor: '#F3EFE6', // צבע הקרם שלכן
+        backgroundColor: '#F3EFE6',
         borderBottom: '1px solid rgba(140, 125, 111, 0.2)',
         color: '#3A312A'
       }}
@@ -50,7 +51,7 @@ export default function Navbar() {
         <Box
           component={RouterLink}
           to="/"
-          sx={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}
+          sx={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit', minWidth: 160 }}
         >
           <ExploreIcon sx={{ fontSize: 30, mr: 1, ml: 1, color: 'primary.main' }} />
           <Typography variant="h5" sx={{ fontFamily: '"Caveat", cursive', fontWeight: 'bold' }}>
@@ -58,20 +59,21 @@ export default function Navbar() {
           </Typography>
         </Box>
 
-        {/* אמצע - קישורים מרכזיים (מוצגים לכולם) */}
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button component={RouterLink} to="/" color="inherit" sx={{ fontSize: '1rem', fontWeight: 'normal' }}>
+        {/* אמצע - כל הקישורים בעיצוב אחיד */}
+        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexGrow: 1 }}>
+          <Button component={RouterLink} to="/" sx={navButtonSx}>
             ראשי
           </Button>
-          <Button component={RouterLink} to="/explore" color="inherit" sx={{ fontSize: '1rem', fontWeight: 'normal' }}>
+          <Button component={RouterLink} to="/explore" sx={navButtonSx}>
             כל הטיולים
           </Button>
-          {/* הכפתור הזה יוביל לתכנון מסלול (עם חיווי "סל" היעדים) */}
           <Button
             component={RouterLink}
             to="/plan"
-            color="inherit"
-            sx={{ fontSize: '1rem', fontWeight: 'bold', backgroundColor: selectedEntriesCount > 0 ? 'rgba(48, 80, 49, 0.1)' : 'transparent', borderRadius: '20px', px: 2 }}
+            sx={{
+              ...navButtonSx,
+              backgroundColor: selectedEntriesCount > 0 ? 'rgba(48, 80, 49, 0.1)' : 'transparent',
+            }}
             startIcon={
               <Badge badgeContent={selectedEntriesCount} color="error">
                 <AltRouteIcon sx={{ color: '#305031' }} />
@@ -80,21 +82,29 @@ export default function Navbar() {
           >
             תכנון טיול חדש
           </Button>
-        </Box>
 
-        {/* צד שמאל - אזור משתמש (משתנה לפי התחברות) */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {isAuthenticated ? (
-            // תפריט למשתמש מחובר
+          {/* קישורים שמוצגים רק למחוברים */}
+          {isAuthenticated && (
             <>
-              <Button component={RouterLink} to="/dashboard" color="primary" sx={{ fontWeight: 'bold' }}>
+              {role === 'ROLE_ADMIN' && (
+                <Button component={RouterLink} to="/admin" sx={navButtonSx}>
+                  ניהול משתמשים
+                </Button>
+              )}
+              <Button component={RouterLink} to="/dashboard" sx={navButtonSx}>
                 יומני המסע שלי
               </Button>
-              <Button onClick={handleLogout} sx={{ color: 'text.secondary' }}>
+            </>
+          )}
+        </Box>
+
+        {/* צד שמאל - אזור משתמש */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 160, justifyContent: 'flex-end' }}>
+          {isAuthenticated ? (
+            <>
+              <Button onClick={handleLogout} sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
                 התנתקות
               </Button>
-
-              {/* אלמנט מעוצב שמציג את שם המשתמש המחובר ומקשר לעמוד הפרופיל */}
               <Box
                 component={RouterLink}
                 to="/profile"
@@ -107,10 +117,8 @@ export default function Navbar() {
                   ml: 1,
                   p: '4px 8px',
                   borderRadius: '20px',
-                  backgroundColor: 'rgba(140, 125, 111, 0.1)', // רקע בהיר עדין מסביב לשם
-                  '&:hover': {
-                    backgroundColor: 'rgba(140, 125, 111, 0.2)'
-                  }
+                  backgroundColor: 'rgba(140, 125, 111, 0.1)',
+                  '&:hover': { backgroundColor: 'rgba(140, 125, 111, 0.2)' }
                 }}
               >
                 <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
@@ -122,7 +130,6 @@ export default function Navbar() {
               </Box>
             </>
           ) : (
-            // תפריט לאורח
             <>
               <Button component={RouterLink} to="/login" color="inherit" sx={{ fontWeight: 'bold' }}>
                 התחברות
