@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { 
-  Box, Typography, Button, Container, CircularProgress, Card, 
-  CardContent, CardMedia, CardActions, IconButton, Dialog, 
-  DialogTitle, DialogContent, DialogContentText, DialogActions as MuiDialogActions 
+import {
+  Box, Typography, Button, Container, CircularProgress, Card,
+  CardContent, CardMedia, CardActions, IconButton, Dialog,
+  DialogTitle, DialogContent, DialogContentText, DialogActions as MuiDialogActions
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 // ייבאנו גם את פונקציית המחיקה:
@@ -18,14 +18,14 @@ export default function Home() {
   const size = 6;
   const { data, isLoading, error, isFetching } = useGetPublicEntriesQuery({ page: page, size: size });
   const [deleteEntry, { isLoading: isDeleting }] = useDeleteEntryMutation();
-  
+
   // שואבים את הסטטוס ואת תפקיד המשתמש מ-Redux
   const isAuthenticated = useSelector((state: any) => state.auth.isAuthenticated);
   const userRole = useSelector((state: any) => state.auth.role);
-  
+
   // בודקים האם המשתמש הוא מנהל
   const isAdmin = userRole === 'ROLE_ADMIN';
-  
+
   const dispatch = useDispatch();
   const selectedRouteEntries = useSelector((state: RootState) => state.route.selectedEntries);
 
@@ -89,12 +89,12 @@ export default function Home() {
           <Typography variant="h6" sx={{ color: '#3A312A', mb: 4, fontFamily: '"Assistant", sans-serif', fontWeight: 600 }}>
             הצטרפו לקהילת המטיילים של WanderLog. תכננו את המסלול המושלם ושימרו את הזיכרונות שלכם ביומן מסע דיגיטלי בעיצוב אישי.
           </Typography>
-          
-          <Button 
-            component={RouterLink} 
-            to={isAuthenticated ? "/dashboard" : "/register"} 
-            variant="contained" 
-            size="large" 
+
+          <Button
+            component={RouterLink}
+            to={isAuthenticated ? "/dashboard" : "/register"}
+            variant="contained"
+            size="large"
             sx={{ px: 5, py: 1.5, fontSize: '1.2rem', borderRadius: '30px' }}
           >
             {isAuthenticated ? 'היכנס ליומני המסע שלך' : 'התחל את היומן שלך'}
@@ -120,103 +120,104 @@ export default function Home() {
           }}
         >
           {data?.content?.map((entry: any) => {
-             const isSelected = selectedRouteEntries.some(e => e.id === entry.id);
+            const isSelected = selectedRouteEntries.some(e => e.id === entry.id);
 
-             return (
-            <Card
-              key={entry.id}
-              elevation={0}
-              sx={{
-                backgroundColor: '#fff',
-                borderRadius: '16px',
-                overflow: 'hidden',
-                display: 'flex',
-                flexDirection: 'column',
-                height: '100%',
-                transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                border: '1px solid rgba(0,0,0,0.05)',
-                position: 'relative', // חיוני כדי למקם את כפתור המחיקה עליו
-                '&:hover': { 
-                  transform: 'translateY(-8px)', 
-                  boxShadow: '0 16px 32px rgba(48, 80, 49, 0.15)' 
-                }
-              }}
-            >
-              {/* כפתור מחיקה - מוצג רק למנהל! */}
-              {isAdmin && (
-              <IconButton 
-              onClick={() => handleDeleteClick(entry.id)}
-              sx={{ 
-                position: 'absolute', 
-                top: 8, 
-                left: 8, 
-                backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                color: 'error.main',
-                '&:hover': { backgroundColor: 'error.main', color: 'white' }
-              }}
-            >
-              🗑️
-            </IconButton>
-              )}
+            return (
+              <Card
+                key={entry.id}
+                elevation={0}
+                sx={{
+                  backgroundColor: '#fff',
+                  borderRadius: '16px',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '100%',
+                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                  border: '1px solid rgba(0,0,0,0.05)',
+                  position: 'relative', // חיוני כדי למקם את כפתור המחיקה עליו
+                  '&:hover': {
+                    transform: 'translateY(-8px)',
+                    boxShadow: '0 16px 32px rgba(48, 80, 49, 0.15)'
+                  }
+                }}
+              >
+                {/* כפתור מחיקה - מוצג רק למנהל! */}
+                {isAdmin && (
+                  <IconButton
+                    onClick={() => handleDeleteClick(entry.id)}
+                    sx={{
+                      position: 'absolute',
+                      top: 8,
+                      left: 8,
+                      backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                      color: 'error.main',
+                      '&:hover': { backgroundColor: 'error.main', color: 'white' }
+                    }}
+                  >
+                    🗑️
+                  </IconButton>
+                )}
 
-              <CardMedia
-                component="img"
-                height="220"
-                image={entry.imageUrl ? `http://localhost:9090${entry.imageUrl}` : '/journal-bg.png'}
-                alt={entry.title}
-                sx={{ objectFit: 'cover' }}
-              />
-              
-              <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 3, pb: 0 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#2E4835', lineHeight: 1.3 }}>
-                    {entry.title || 'מסע ללא כותרת'}
+                <CardMedia
+                  component="img"
+                  height="220"
+                  image={entry.imageUrl ? `http://localhost:9090${entry.imageUrl}` : '/journal-bg.png'}
+                  alt={entry.title}
+                  sx={{ objectFit: 'cover' }}
+                />
+
+                <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', p: 3, pb: 0 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#2E4835', lineHeight: 1.3 }}>
+                      {entry.title || 'מסע ללא כותרת'}
+                    </Typography>
+                  </Box>
+
+                  <Typography variant="subtitle2" sx={{ color: '#cca010', fontWeight: 'bold', display: 'flex', alignItems: 'center', mb: 2 }}>
+                    📍 {entry.location?.country || 'לא צוינה מדינה'} {entry.location?.name ? `- ${entry.location.name}` : ''}
                   </Typography>
-                </Box>
 
-                <Typography variant="subtitle2" sx={{ color: '#cca010', fontWeight: 'bold', display: 'flex', alignItems: 'center', mb: 2 }}>
-                  📍 {entry.location?.country || 'לא צוינה מדינה'} {entry.location?.name ? `- ${entry.location.name}` : ''}
-                </Typography>
+                  <Typography variant="body2" sx={{ color: '#5C5850', lineHeight: 1.6, flexGrow: 1 }}>
+                    {entry.description
+                      ? entry.description.length > 110
+                        ? `${entry.description.substring(0, 110)}...`
+                        : entry.description
+                      : 'אין תיאור ליומן זה.'}
+                  </Typography>
+                </CardContent>
 
-                <Typography variant="body2" sx={{ color: '#5C5850', lineHeight: 1.6, flexGrow: 1 }}>
-                  {entry.description 
-                    ? entry.description.length > 110 
-                      ? `${entry.description.substring(0, 110)}...` 
-                      : entry.description
-                    : 'אין תיאור ליומן זה.'}
-                </Typography>
-              </CardContent>
-
-              <CardActions sx={{ p: 3, pt: 1 }}>
-                <Button 
-                  fullWidth
-                  variant={isSelected ? "contained" : "outlined"}
-                  onClick={() => dispatch(toggleRouteEntry({
-                    id: entry.id,
-                    title: entry.title,
-                    location: {
-                      latitude: entry.location?.latitude || 0,
-                      longitude: entry.location?.longitude || 0,
-                      name: entry.location?.name
-                    }
-                  }))}
-                  sx={{ 
-                    borderRadius: '20px',
-                    borderColor: '#305031',
-                    color: isSelected ? '#fff' : '#305031',
-                    backgroundColor: isSelected ? '#305031' : 'transparent',
-                    '&:hover': {
-                       backgroundColor: isSelected ? '#243b25' : 'rgba(48, 80, 49, 0.08)',
-                       borderColor: '#305031'
-                    }
-                  }}
-                  startIcon={isSelected ? <PlaylistAddCheckIcon /> : <PlaylistAddIcon />}
-                >
-                  {isSelected ? 'נמצא במסלול' : 'הוסף למסלול'}
-                </Button>
-              </CardActions>
-            </Card>
-          )})}
+                <CardActions sx={{ p: 3, pt: 1 }}>
+                  <Button
+                    fullWidth
+                    variant={isSelected ? "contained" : "outlined"}
+                    onClick={() => dispatch(toggleRouteEntry({
+                      id: entry.id,
+                      title: entry.title,
+                      location: {
+                        latitude: entry.location?.latitude || 0,
+                        longitude: entry.location?.longitude || 0,
+                        name: entry.location?.name
+                      }
+                    }))}
+                    sx={{
+                      borderRadius: '20px',
+                      borderColor: '#305031',
+                      color: isSelected ? '#fff' : '#305031',
+                      backgroundColor: isSelected ? '#305031' : 'transparent',
+                      '&:hover': {
+                        backgroundColor: isSelected ? '#243b25' : 'rgba(48, 80, 49, 0.08)',
+                        borderColor: '#305031'
+                      }
+                    }}
+                    startIcon={isSelected ? <PlaylistAddCheckIcon /> : <PlaylistAddIcon />}
+                  >
+                    {isSelected ? 'נמצא במסלול' : 'הוסף למסלול'}
+                  </Button>
+                </CardActions>
+              </Card>
+            )
+          })}
         </Box>
 
         {data?.content?.length === 0 && !isLoading && (
@@ -236,8 +237,8 @@ export default function Home() {
       </Container>
 
       {/* דיאלוג אזהרה למחיקה - מוצג רק למנהל שמנסה למחוק */}
-      <Dialog 
-        open={openDeleteDialog} 
+      <Dialog
+        open={openDeleteDialog}
         onClose={() => setOpenDeleteDialog(false)}
         dir="rtl"
         sx={{
@@ -248,12 +249,12 @@ export default function Home() {
           }
         }}
       >
-        <Box sx={{ 
+        <Box sx={{
           bgcolor: 'white',
-          borderRadius: 3, 
-          p: 1, 
+          borderRadius: 3,
+          p: 1,
           minWidth: 380,
-          boxShadow: '0px 10px 30px rgba(0,0,0,0.5)' 
+          boxShadow: '0px 10px 30px rgba(0,0,0,0.5)'
         }}>
           <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'error.main', fontWeight: 'bold' }}>
             ⚠️ מחיקת פוסט כמנהל
