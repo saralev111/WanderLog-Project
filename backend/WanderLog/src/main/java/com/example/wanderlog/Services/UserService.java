@@ -1,34 +1,67 @@
 package com.example.wanderlog.Services;
 
+import com.example.wanderlog.Entities.Trip;
 import com.example.wanderlog.Entities.User;
 import com.example.wanderlog.Entities.UserRole;
+import com.example.wanderlog.Repositories.TripRepo;
 import com.example.wanderlog.Repositories.UserRepo;
-import com.example.wanderlog.exception.ResourceNotFoundException; // ייבוא המחלקה החדשה
+import com.example.wanderlog.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 public class UserService {
+
     @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
     private UserRepo userRepo;
 
+    @Autowired
+    private TripRepo tripRepo;
+
+    // --- המתודה שחסרה ל-JournalEntryService ---
+    public User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUserName = authentication.getName();
+        return userRepo.findByUserName(currentUserName)
+                .orElseThrow(() -> new ResourceNotFoundException("משתמש לא נמצא או לא מחובר"));
+    }
+
+    // --- מתודת מחיקה בטוחה (עם טיפול בטיולים) ---
+    @Transactional
+    public void delete(Long userId) {
+        if (!userRepo.existsById(userId)) {
+            throw new ResourceNotFoundException("לא ניתן למחוק: משתמש עם ID " + userId + " לא קיים");
+        }
+
+        // ניקוי טיולים משויכים למשתמש
+        List<Trip> userTrips = tripRepo.findByUserId(userId);
+        if (userTrips != null && !userTrips.isEmpty()) {
+            tripRepo.deleteAll(userTrips);
+        }
+
+        userRepo.deleteById(userId);
+    }
+
+    // --- שאר המתודות הסטנדרטיות ---
+
     public List<User> getAllUsers() {
         return userRepo.findAll();
     }
 
-    public User registerUser(User newUser){
-        if(userRepo.existsByUserName(newUser.getUserName())){
-            throw new RuntimeException("השם משתמש כבר קיים במערכת"); // נשאר Runtime (400)
+    public User registerUser(User newUser) {
+        if (userRepo.existsByUserName(newUser.getUserName())) {
+            throw new RuntimeException("השם משתמש כבר קיים במערכת");
         }
-        if(userRepo.existsByEmail(newUser.getEmail())){
+        if (userRepo.existsByEmail(newUser.getEmail())) {
             throw new RuntimeException("האימייל כבר קיים במערכת");
         }
         if (newUser.getRole() == null) {
@@ -38,54 +71,34 @@ public class UserService {
         return userRepo.save(newUser);
     }
 
-    public User GetUserByUserName(String userName){
+    public User GetUserByUserName(String userName) {
         return userRepo.findByUserName(userName)
-                // שינוי: אם מחפשים משתמש ספציפי והוא לא נמצא - זה 404
                 .orElseThrow(() -> new ResourceNotFoundException("שם המשתמש " + userName + " לא נמצא"));
     }
 
-    public User loginUser (String userName, String password){
-        // שינוי: שימוש ב-ResourceNotFoundException לזיהוי משתמש חסר
+    public User loginUser(String userName, String password) {
         User user = userRepo.findByUserName(userName)
                 .orElseThrow(() -> new ResourceNotFoundException("שם המשתמש לא נמצא"));
 
-        if(!passwordEncoder.matches(password, user.getPassword())){
-            throw new RuntimeException("סיסמה שגויה"); // טעות בסיסמה היא 400 (Bad Request)
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new RuntimeException("סיסמה שגויה");
         }
         return user;
     }
 
-    public User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentUserName = authentication.getName();
-
-        return userRepo.findByUserName(currentUserName)
-                .orElseThrow(() -> new ResourceNotFoundException("משתמש לא נמצא או לא מחובר"));
-    }
-
-    public User getByUserId(Long userId){
+    public User getByUserId(Long userId) {
         return userRepo.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("לא נמצא משתמש עם ה-ID: " + userId));
     }
 
-    public User updateUser(Long id, User details){
-        User user = getByUserId(id); // זה כבר זורק 404 אם אין משתמש
-
-        // תיקון לוגי: בודקים אם בפרטים החדשים (details) שלחו נתון לא ריק
-        if(details.getUserName() != null && !details.getUserName().isEmpty()){
+    public User updateUser(Long id, User details) {
+        User user = getByUserId(id);
+        if (details.getUserName() != null && !details.getUserName().isEmpty()) {
             user.setUserName(details.getUserName());
         }
-        if(details.getEmail() != null && !details.getEmail().isEmpty()){
+        if (details.getEmail() != null && !details.getEmail().isEmpty()) {
             user.setEmail(details.getEmail());
         }
         return userRepo.save(user);
-    }
-
-    public void delete (Long userId){
-        if (!userRepo.existsById(userId)) {
-            // שינוי: זריקת 404 אם מנסים למחוק משהו שלא קיים
-            throw new ResourceNotFoundException("לא ניתן למחוק: משתמש עם ID " + userId + " לא קיים");
-        }
-        userRepo.deleteById(userId);
     }
 }
