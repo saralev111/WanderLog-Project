@@ -50,15 +50,21 @@ public class TripController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<?> getAllTrips() {
-        List<Trip> trips = tripRepo.findAll();
+    public ResponseEntity<?> getAllTrips(Authentication authentication) {
+        // 1. מוצאים מי המשתמש שמחובר כרגע למערכת לפי הטוקן שלו
+        User currentUser = userRepo.findByUserName(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("משתמש לא נמצא"));
 
+        // 2. התיקון: שולפים מהדאטה-בייס רק את הטיולים ששייכים למשתמש הספציפי הזה!
+        List<Trip> trips = tripRepo.findByUserId(currentUser.getId());
+
+        // 3. ממירים את הטיולים ל-DTO כפי שהיה קודם
         List<TripDTO> tripDTOs = trips.stream().map(trip -> {
             TripDTO dto = new TripDTO();
             dto.setId(trip.getId());
             dto.setTitle(trip.getTitle());
 
-            // ✅ התיקון: ממירים ומחזירים את כל היומנים/התחנות המשויכים לטיול הזה!
+            // ממירים ומחזירים את כל היומנים/התחנות המשויכים לטיול הזה
             if (trip.getJournalEntries() != null) {
                 dto.setJournalEntries(trip.getJournalEntries().stream()
                         .map(entityMapper::toDTO)

@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button, Container, CircularProgress, Card, CardContent, CardMedia, CardActions } from '@mui/material';
+import { 
+  Box, Typography, Button, Container, CircularProgress, Card, 
+  CardContent, CardMedia, CardActions, IconButton, Dialog, 
+  DialogTitle, DialogContent, DialogContentText, DialogActions as MuiDialogActions 
+} from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
-import { useGetPublicEntriesQuery } from '../app/api/journalApi';
+// ייבאנו גם את פונקציית המחיקה:
+import { useGetPublicEntriesQuery, useDeleteEntryMutation } from '../app/api/journalApi';
 import { useDispatch, useSelector } from 'react-redux';
 import { toggleRouteEntry } from '../features/routeSlice';
 import type { RootState } from '../features/store';
@@ -12,13 +17,21 @@ export default function Home() {
   const [page, setPage] = useState(0);
   const size = 6;
   const { data, isLoading, error, isFetching } = useGetPublicEntriesQuery({ page: page, size: size });
+  const [deleteEntry, { isLoading: isDeleting }] = useDeleteEntryMutation();
   
-  // שואבים את הסטטוס: האם המשתמש מחובר?
+  // שואבים את הסטטוס ואת תפקיד המשתמש מ-Redux
   const isAuthenticated = useSelector((state: any) => state.auth.isAuthenticated);
+  const userRole = useSelector((state: any) => state.auth.role);
   
-  // הגדרות עבור כפתור המסלול (Route)
+  // בודקים האם המשתמש הוא מנהל
+  const isAdmin = userRole === 'ROLE_ADMIN';
+  
   const dispatch = useDispatch();
   const selectedRouteEntries = useSelector((state: RootState) => state.route.selectedEntries);
+
+  // סטייטים לחלון מחיקת יומן
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState<number | null>(null);
 
   const handleNextPage = () => {
     if (data?.content?.length === size) {
@@ -29,6 +42,24 @@ export default function Home() {
   const handlePrevPage = () => {
     if (page > 0) {
       setPage(page - 1);
+    }
+  };
+
+  const handleDeleteClick = (id: number) => {
+    setEntryToDelete(id);
+    setOpenDeleteDialog(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (entryToDelete) {
+      try {
+        await deleteEntry(entryToDelete).unwrap();
+        setOpenDeleteDialog(false);
+        setEntryToDelete(null);
+      } catch (err) {
+        console.error('שגיאה במחיקת היומן:', err);
+        alert('אופס, משהו השתבש במהלך המחיקה.');
+      }
     }
   };
 
@@ -59,7 +90,6 @@ export default function Home() {
             הצטרפו לקהילת המטיילים של WanderLog. תכננו את המסלול המושלם ושימרו את הזיכרונות שלכם ביומן מסע דיגיטלי בעיצוב אישי.
           </Typography>
           
-          {/* הכפתור החכם שלנו */}
           <Button 
             component={RouterLink} 
             to={isAuthenticated ? "/dashboard" : "/register"} 
@@ -69,7 +99,6 @@ export default function Home() {
           >
             {isAuthenticated ? 'היכנס ליומני המסע שלך' : 'התחל את היומן שלך'}
           </Button>
-
         </Container>
       </Box>
 
@@ -106,12 +135,30 @@ export default function Home() {
                 height: '100%',
                 transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                 border: '1px solid rgba(0,0,0,0.05)',
+                position: 'relative', // חיוני כדי למקם את כפתור המחיקה עליו
                 '&:hover': { 
                   transform: 'translateY(-8px)', 
                   boxShadow: '0 16px 32px rgba(48, 80, 49, 0.15)' 
                 }
               }}
             >
+              {/* כפתור מחיקה - מוצג רק למנהל! */}
+              {isAdmin && (
+              <IconButton 
+              onClick={() => handleDeleteClick(entry.id)}
+              sx={{ 
+                position: 'absolute', 
+                top: 8, 
+                left: 8, 
+                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                color: 'error.main',
+                '&:hover': { backgroundColor: 'error.main', color: 'white' }
+              }}
+            >
+              🗑️
+            </IconButton>
+              )}
+
               <CardMedia
                 component="img"
                 height="220"
@@ -140,7 +187,6 @@ export default function Home() {
                 </Typography>
               </CardContent>
 
-              {/* הכפתור החדש */}
               <CardActions sx={{ p: 3, pt: 1 }}>
                 <Button 
                   fullWidth
@@ -188,6 +234,45 @@ export default function Home() {
         </Box>
 
       </Container>
+
+      {/* דיאלוג אזהרה למחיקה - מוצג רק למנהל שמנסה למחוק */}
+      <Dialog 
+        open={openDeleteDialog} 
+        onClose={() => setOpenDeleteDialog(false)}
+        dir="rtl"
+        sx={{
+          '& .MuiDialog-paper': {
+            backgroundColor: 'transparent',
+            boxShadow: 'none',
+            backgroundImage: 'none'
+          }
+        }}
+      >
+        <Box sx={{ 
+          bgcolor: 'white',
+          borderRadius: 3, 
+          p: 1, 
+          minWidth: 380,
+          boxShadow: '0px 10px 30px rgba(0,0,0,0.5)' 
+        }}>
+          <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'error.main', fontWeight: 'bold' }}>
+            ⚠️ מחיקת פוסט כמנהל
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText sx={{ color: 'text.primary', mt: 1 }}>
+              האם את בטוחה שברצונך למחוק פוסט פומבי זה לצמיתות מהמערכת?
+            </DialogContentText>
+          </DialogContent>
+          <MuiDialogActions sx={{ px: 3, pb: 2, justifyContent: 'flex-start', gap: 1 }}>
+            <Button onClick={handleConfirmDelete} color="error" variant="contained" disabled={isDeleting} sx={{ borderRadius: 2 }}>
+              {isDeleting ? 'מוחק...' : 'כן, מחק פוסט'}
+            </Button>
+            <Button onClick={() => setOpenDeleteDialog(false)} color="inherit" variant="outlined" sx={{ borderRadius: 2 }}>
+              ביטול
+            </Button>
+          </MuiDialogActions>
+        </Box>
+      </Dialog>
     </Box>
   );
 }

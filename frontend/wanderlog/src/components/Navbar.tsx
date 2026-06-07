@@ -9,6 +9,10 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { Badge } from '@mui/material';
 import AltRouteIcon from '@mui/icons-material/AltRoute'; // אייקון שמתאים למסלול
 
+// --- התוספות לניקוי הזיכרון של השרת ---
+import { journalApi } from '../app/api/journalApi';
+import { tripApi } from '../app/api/tripApi';
+
 export default function Navbar() {
   // קריאת מצב ההתחברות ושם המשתמש מתוך ה-Redux המשודרג שלנו
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
@@ -19,8 +23,15 @@ export default function Navbar() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
+    // 1. ניקוי המשתמש והטוקן מה-Redux המקומי
     dispatch(logout());
-    navigate('/'); // חזרה לדף הבית אחרי התנתקות
+    
+    // 2. הפקודות שמשמידות את הנתונים (Cache) הקודמים מ-RTK Query
+    dispatch(journalApi.util.resetApiState());
+    dispatch(tripApi.util.resetApiState());
+
+    // 3. חזרה לדף הבית אחרי התנתקות
+    navigate('/'); 
   };
 
   return (
@@ -55,7 +66,6 @@ export default function Navbar() {
           <Button component={RouterLink} to="/explore" color="inherit" sx={{ fontSize: '1rem', fontWeight: 'normal' }}>
             כל הטיולים
           </Button>
-          {/* הכפתור הזה יוביל לתכנון מסלול */}
           {/* הכפתור הזה יוביל לתכנון מסלול (עם חיווי "סל" היעדים) */}
           <Button
             component={RouterLink}
