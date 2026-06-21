@@ -27,7 +27,6 @@ public class UserService {
     @Autowired
     private TripRepo tripRepo;
 
-    // --- המתודה שחסרה ל-JournalEntryService ---
     public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String currentUserName = authentication.getName();
@@ -35,7 +34,7 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("משתמש לא נמצא או לא מחובר"));
     }
 
-    // --- מתודת מחיקה בטוחה (עם טיפול בטיולים) ---
+    //מחיקת טיול עם טיפול בניתוק המסלולים המחוברים אליו
     @Transactional
     public void delete(Long userId) {
         if (!userRepo.existsById(userId)) {
@@ -51,7 +50,6 @@ public class UserService {
         userRepo.deleteById(userId);
     }
 
-    // --- שאר המתודות הסטנדרטיות ---
 
     public List<User> getAllUsers() {
         return userRepo.findAll();

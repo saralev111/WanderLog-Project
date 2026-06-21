@@ -9,30 +9,23 @@ import java.util.List;
 @Service
 public class RouteOptimizationService {
 
-    public List<Location> optimizeDynamicRoute(List<Location> fixedStops, List<Location> flexibleStops) {
-
-        if (flexibleStops == null || flexibleStops.isEmpty()) {
-            return new ArrayList<>(fixedStops != null ? fixedStops : new ArrayList<>());
+    public List<Location> optimizeRoute(List<Location> stops) {
+        // אם אין מספיק מיקומים לסידור, מחזירים את הרשימה כמו שהיא
+        if (stops == null || stops.size() <= 1) {
+            return new ArrayList<>(stops != null ? stops : new ArrayList<>());
         }
 
-        // מצב 1: יש עוגנים - נתחיל מהעוגן האחרון ונמשיך משם (לפי שכן קרוב)
-        if (fixedStops != null && !fixedStops.isEmpty()) {
-            Location startPoint = fixedStops.get(fixedStops.size() - 1);
-            return buildGreedyRoute(fixedStops, flexibleStops, startPoint);
-        }
-
-        // מצב 2: אין עוגנים (מצב קלאסי של סל יעדים)
-        // במקום לבחור שרירותית את הנקודה הראשונה, נבדוק את כל אפשרויות ההתחלה!
         List<Location> bestRoute = null;
         double minTotalDistance = Double.MAX_VALUE;
 
-        for (int i = 0; i < flexibleStops.size(); i++) {
+        // האלגוריתם רץ על כל היעדים ובודק מאיזו נקודה הכי כדאי להתחיל
+        for (int i = 0; i < stops.size(); i++) {
             List<Location> candidateStartList = new ArrayList<>();
-            Location startNode = flexibleStops.get(i);
+            Location startNode = stops.get(i);
             candidateStartList.add(startNode);
 
-            // מכינים רשימה של שאר היעדים (ללא נקודת ההתחלה הנוכחית)
-            List<Location> remaining = new ArrayList<>(flexibleStops);
+            // מכינים רשימה של שאר היעדים
+            List<Location> remaining = new ArrayList<>(stops);
             remaining.remove(i);
 
             // בונים את המסלול האפשרי מהנקודה הזו
@@ -41,7 +34,7 @@ public class RouteOptimizationService {
             // מחשבים מה המרחק הכולל של כל המסלול הזה מהתחלה עד סוף
             double currentTotalDistance = calculateTotalRouteDistance(candidateRoute);
 
-            // אם מצאנו מסלול קצר יותר ממה שהכרנו עד כה - נשמור אותו!
+            // אם מצאנו מסלול קצר יותר ממה שהכרנו עד כה - נשמור אותו
             if (currentTotalDistance < minTotalDistance) {
                 minTotalDistance = currentTotalDistance;
                 bestRoute = candidateRoute;
@@ -49,9 +42,7 @@ public class RouteOptimizationService {
         }
 
         return bestRoute;
-    }
-
-    // --- פונקציית העזר שבונה מסלול מנקודה מסוימת (הלוגיקה שלך ששודרגה) ---
+    }    //בונה מסלול מנקודה מסויימת
     private List<Location> buildGreedyRoute(List<Location> baseRoute, List<Location> remainingStops, Location current) {
         List<Location> route = new ArrayList<>(baseRoute);
         List<Location> unvisited = new ArrayList<>(remainingStops);
@@ -89,7 +80,7 @@ public class RouteOptimizationService {
         return route;
     }
 
-    // --- פונקציית עזר לחישוב המרחק המצטבר של כל הטיול ---
+    //חישוב המרחק המצטבר של כל הטיול
     private double calculateTotalRouteDistance(List<Location> route) {
         double totalDistance = 0;
         for (int i = 0; i < route.size() - 1; i++) {
@@ -105,7 +96,7 @@ public class RouteOptimizationService {
         return totalDistance;
     }
 
-    // נוסחת הברסיין למרחק (מצוינת, לא נגענו)
+    //נוסחת הברסיין למרחק בין מיקומים
     private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
         final int EARTH_RADIUS_KM = 6371;
         double latDistance = Math.toRadians(lat2 - lat1);

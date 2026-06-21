@@ -29,7 +29,7 @@ const Dashboard = () => {
     );
   }
 
-  const myEntriesArray = entriesData?.content || [];
+const myEntriesArray = Array.isArray(entriesData) ? entriesData : [];
 
   const uniqueCountries = Array.from(
     new Set(

@@ -15,7 +15,7 @@ public class JournalEntryDTO {
     private Integer visitOrder;
     @JsonProperty("isPublic")
     private boolean isPublic;
-    private UserDTO user;      // משתמש ב-DTO ולא ב-Entity!
-    private LocationDTO location; // משתמש ב-DTO ולא ב-Entity!
+    private UserDTO user;
+    private LocationDTO location;
     private String imageUrl;
 }

@@ -27,7 +27,6 @@ public class AiRecommendationService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    // --- הוספנו פה קונסטרקטור (בנאי) שמכבה את בדיקות האבטחה ---
     public AiRecommendationService() {
         try {
             TrustManager[] trustAllCerts = new TrustManager[]{
@@ -45,11 +44,9 @@ public class AiRecommendationService {
             e.printStackTrace();
         }
     }
-    // --- סוף קוד הקסם ---
 
     public String generateRecommendation(String prompt) {
         System.out.println(">>> מתחיל ניסיון תקשורת עם ה-API של Gemini...");
-
         try {
             String fullUrl = apiUrl + apiKey;
 

@@ -4,8 +4,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { updateRouteOrder, toggleRouteEntry, clearRoute, loadTripForEdit } from '../features/routeSlice';
 import type { RootState } from '../features/store';
 import { useOptimizeRouteMutation, useGetAiAdviceMutation } from '../app/api/journalApi';
-import { useSaveTripMutation, useUpdateTripMutation, useGetTripsQuery } from '../app/api/tripApi'; 
-import ReactMarkdown from 'react-markdown'; 
+import { useSaveTripMutation, useUpdateTripMutation, useGetTripsQuery } from '../app/api/tripApi';
+import ReactMarkdown from 'react-markdown';
 import { useNavigate, useParams } from 'react-router-dom';
 
 // ספריות הגרירה (Drag & Drop)
@@ -44,13 +44,13 @@ const MapBoundsUpdater = ({ coordinates }: { coordinates: [number, number][] }) 
 
 const SortableRouteItem = ({ id, place, index, onRemove }: any) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
-  const style = { 
-    transform: CSS.Transform.toString(transform), 
-    transition, 
-    backgroundColor: isDragging ? '#f0f0f0' : 'transparent', 
-    zIndex: isDragging ? 2 : 1 
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    backgroundColor: isDragging ? '#f0f0f0' : 'transparent',
+    zIndex: isDragging ? 2 : 1
   };
-  
+
   return (
     <ListItem ref={setNodeRef} style={style} sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1.5 }}>
       <Box {...attributes} {...listeners} sx={{ cursor: 'grab', display: 'flex', alignItems: 'center', color: '#999' }}><DragIndicatorIcon /></Box>
@@ -65,16 +65,16 @@ export default function RoutePlanner() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { tripId } = useParams();
-  
+
   const isEditMode = Boolean(tripId);
-  const { data: allTrips } = useGetTripsQuery(); 
+  const { data: allTrips } = useGetTripsQuery();
   const [updateTrip, { isLoading: isUpdating }] = useUpdateTripMutation();
   const [saveTrip, { isLoading: isSaving }] = useSaveTripMutation();
-  
+
   const places = useSelector((state: RootState) => state.route.selectedEntries);
   const [optimizeRoute, { isLoading: isOptimizing }] = useOptimizeRouteMutation();
   const [getAiAdvice, { isLoading: isAiLoading }] = useGetAiAdviceMutation();
-  
+
   const [aiAdvice, setAiAdvice] = useState<string | null>(null);
   const [tripTitle, setTripTitle] = useState("");
   const [loadedTripId, setLoadedTripId] = useState<string | null>(null);
@@ -96,7 +96,7 @@ export default function RoutePlanner() {
       if (tripToEdit) {
         setTripTitle(tripToEdit.title);
         if (tripToEdit.journalEntries) {
-           dispatch(loadTripForEdit(tripToEdit.journalEntries));
+          dispatch(loadTripForEdit(tripToEdit.journalEntries));
         }
         setLoadedTripId(tripId || null);
       }
@@ -109,7 +109,7 @@ export default function RoutePlanner() {
 
   const handleOptimize = async () => {
     try {
-      const payload = { fixedEntryIds: [], flexibleEntryIds: places.map(p => p.id) };
+      const payload = { entryIds: places.map(p => p.id) };
       const optimizedEntries = await optimizeRoute(payload).unwrap();
       const sortedEntries = [...optimizedEntries].sort((a: any, b: any) => a.visitOrder - b.visitOrder);
       const reorderedPlaces = sortedEntries.map((entry: any) => places.find(p => p.id === entry.id)).filter(Boolean);
@@ -139,7 +139,7 @@ export default function RoutePlanner() {
       setSnackbar({ open: true, message: 'אנא הזן שם לטיול לפני השמירה', severity: 'warning' });
       return;
     }
-    
+
     try {
       setHasJustSaved(true);
       if (isEditMode) {
@@ -149,15 +149,15 @@ export default function RoutePlanner() {
       }
 
       setSnackbar({ open: true, message: 'הטיול נשמר בהצלחה!', severity: 'success' });
-      
+
       // === איפוס הנתונים בסיום ===
       dispatch(clearRoute());
       setTripTitle("");
       setAiAdvice(null);
-      
+
       // התיקון החשוב: לא מאפסים כאן את loadedTripId ל-null!
       // השארתו כפי שהוא מונעת מה-useEffect לרוץ שוב ולמשוך את המידע מחדש בשניות האחרונות.
-      
+
       setTimeout(() => {
         navigate('/explore');
       }, 1500);
@@ -183,29 +183,29 @@ export default function RoutePlanner() {
   return (
     <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, minHeight: '85vh', p: 4, gap: 4, maxWidth: 1400, mx: 'auto' }}>
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>
-        
+
         {/* פאנל כפתורי פעולות חכמים */}
         <Paper elevation={3} sx={{ p: 3, borderRadius: 3, backgroundColor: '#fff', textAlign: 'center', borderTop: '4px solid #305031' }}>
           <Typography variant="h5" sx={{ mb: 1, fontWeight: 'bold', color: '#2E4835' }}>{isEditMode ? 'עריכת מסלול' : 'תכנון המסלול שלי'}</Typography>
           <Typography variant="body2" sx={{ mb: 3, color: '#666' }}>גררו את היעדים כדי לשנות את הסדר, או תנו לנו לסדר לכם מסלול חכם.</Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Button 
-              variant="contained" 
-              fullWidth 
-              disabled={isOptimizing || places.length < 2} 
-              onClick={handleOptimize} 
-              startIcon={isOptimizing ? <CircularProgress size={20} color="inherit" /> : <AutoAwesomeIcon />} 
+            <Button
+              variant="contained"
+              fullWidth
+              disabled={isOptimizing || places.length < 2}
+              onClick={handleOptimize}
+              startIcon={isOptimizing ? <CircularProgress size={20} color="inherit" /> : <AutoAwesomeIcon />}
               sx={{ backgroundColor: '#cca010', color: '#fff', '&:hover': { backgroundColor: '#b08a0e' } }}
             >
               {isOptimizing ? 'מחשב מסלול...' : 'סדר לי מסלול חכם'}
             </Button>
             <Tooltip title="קבלו טיפים לאריזה ולמקומות שבחרתם" arrow>
-              <Button 
-                variant="outlined" 
-                fullWidth 
-                disabled={places.length === 0 || isAiLoading} 
-                onClick={handleGetAiAdvice} 
-                startIcon={isAiLoading ? <CircularProgress size={20} color="inherit" /> : <SmartToyIcon />} 
+              <Button
+                variant="outlined"
+                fullWidth
+                disabled={places.length === 0 || isAiLoading}
+                onClick={handleGetAiAdvice}
+                startIcon={isAiLoading ? <CircularProgress size={20} color="inherit" /> : <SmartToyIcon />}
                 sx={{ borderColor: '#305031', color: '#305031' }}
               >
                 {isAiLoading ? 'מתייעץ עם המומחה...' : 'התייעץ עם AI על המסלול'}
@@ -217,15 +217,15 @@ export default function RoutePlanner() {
         {/* הצגת עצת ה-AI במידה וקיימת */}
         {aiAdvice && (
           <Paper elevation={3} sx={{ p: 3, borderRadius: 3, backgroundColor: '#E8F5E9', border: '1px solid #C8E6C9' }}>
-             <Typography variant="subtitle1" sx={{ color: '#2E4835', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <AutoAwesomeIcon sx={{ color: '#cca010' }} /> המלצת היועץ החכם:
-             </Typography>
-             <Box sx={{ typography: 'body2', '& p': { m: 0, mb: 1 } }}>
-                <ReactMarkdown>{aiAdvice}</ReactMarkdown>
-             </Box>
-             <Button size="small" onClick={() => setAiAdvice(null)} sx={{ mt: 1, color: '#666' }}>
-                הסתר עצה
-             </Button>
+            <Typography variant="subtitle1" sx={{ color: '#2E4835', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+              <AutoAwesomeIcon sx={{ color: '#cca010' }} /> המלצת היועץ החכם:
+            </Typography>
+            <Box sx={{ typography: 'body2', '& p': { m: 0, mb: 1 } }}>
+              <ReactMarkdown>{aiAdvice}</ReactMarkdown>
+            </Box>
+            <Button size="small" onClick={() => setAiAdvice(null)} sx={{ mt: 1, color: '#666' }}>
+              הסתר עצה
+            </Button>
           </Paper>
         )}
 
@@ -270,9 +270,9 @@ export default function RoutePlanner() {
       </Box>
 
       {/* הודעות קופצות מעוצבות - Snackbar */}
-      <Snackbar 
-        open={snackbar.open} 
-        autoHideDuration={4000} 
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
