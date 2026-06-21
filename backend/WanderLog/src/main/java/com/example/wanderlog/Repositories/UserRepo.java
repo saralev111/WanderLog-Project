@@ -9,16 +9,11 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepo extends JpaRepository<User, Long> {
-    //חיפוש משתמש על פי שם משתמש
+
     Optional<User> findByUserName(String userName);
 
-    //חיפוש משתמש על פי אימייל
-    Optional<User> findByEmail(String email);
-
-    //האם קיים משתמש על פי שם משתמש
     boolean existsByUserName(String userName);
 
-    //האם קיים משתמש על פי אימייל
     boolean existsByEmail(String email);
 
 }

@@ -12,17 +12,18 @@ import AdminPanel from './pages/AdminPanel';
 import RoutePlanner from './pages/RoutePlanner';
 import Explore from './pages/Explore';
 
+
 function App() {
   return (
     <Router>
-      {/* Box עוטף שנותן גובה מלא לאפליקציה */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      {/* Box עוטף שנותן גובה מלא לאפליקציה ומשלב את מחלקת ה-SCSS הראשית (wanderlog-app-root) */}
+      <Box className="wanderlog-app-root" sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         
         {/* ה-Navbar נמצא מחוץ ל-Routes, ולכן יופיע בכל מסך! */}
         <Navbar />
         
-        {/* אזור התוכן המשתנה */}
-        <Box sx={{ flexGrow: 1 }}>
+        {/* אזור התוכן המשתנה המקבל את מחלקת ה-SCSS (main-content-area) לעיצוב היררכי פנימי */}
+        <Box className="main-content-area" sx={{ flexGrow: 1 }}>
           <Routes>
             {/* נתיב לדף הבית (פתוח לכולם) */}
             <Route path="/" element={<Home />} />
@@ -31,16 +32,16 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             
-            {/* האזורים האישיים (מוגנים) */}
+            {/* האזורים האישיים המוגנים באמצעות ProtectedRoute */}
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
             <Route path="/plan" element={<ProtectedRoute><RoutePlanner /></ProtectedRoute>} />
             
-            {/* נתיב עריכת מסלול (מהענף שלך) */}
+            {/* נתיב עריכת מסלול דינמי לפי מזהה טיול (Trip ID) */}
             <Route path="/plan/:tripId" element={<ProtectedRoute><RoutePlanner /></ProtectedRoute>} />
             
-            {/* התיקון של הראשי: עטפנו גם את "כל הטיולים" בהגנה! */}
+            {/* נתיב "כל הטיולים" העטוף גם הוא בהגנת גישה למשתמשים מחוברים */}
             <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
           </Routes>
         </Box>

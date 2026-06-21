@@ -45,14 +45,14 @@ public class AdminController {
         return ResponseEntity.ok(userDTOs);
     }
 
-    // 2. מחיקת יומן של כל משתמש (למשל אם יש תוכן פוגעני)
+    //  מחיקת יומן של כל משתמש
     @DeleteMapping("/entry/{id}")
     public ResponseEntity<String> deleteAnyEntry(@PathVariable Long id) {
         journalEntryService.deleteEntry(id);
         return ResponseEntity.ok("היומן נמחק בהצלחה על ידי המנהל.");
     }
 
-    // 3. חסימת/מחיקת משתמש
+    //  חסימת/מחיקת משתמש
     @DeleteMapping("/user/{id}")
     public ResponseEntity<String> deleteUser(@PathVariable Long id) {
         userService.delete(id);

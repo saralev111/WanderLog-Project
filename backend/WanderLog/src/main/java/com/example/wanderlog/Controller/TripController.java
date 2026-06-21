@@ -30,7 +30,7 @@ public class TripController {
     private TripRepo tripRepo;
 
     @Autowired
-    private EntityMapper entityMapper; // ✅ הזרקת המאפר כדי להמיר יומנים ל-DTO
+    private EntityMapper entityMapper;
 
     @PostMapping("/save-planned")
     public ResponseEntity<?> savePlannedTrip(@RequestBody TripDTO tripDTO, Authentication authentication) {
@@ -51,20 +51,20 @@ public class TripController {
 
     @GetMapping("/all")
     public ResponseEntity<?> getAllTrips(Authentication authentication) {
-        // 1. מוצאים מי המשתמש שמחובר כרגע למערכת לפי הטוקן שלו
+        //  מוצאים מי המשתמש שמחובר כרגע למערכת לפי הטוקן שלו
         User currentUser = userRepo.findByUserName(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("משתמש לא נמצא"));
 
-        // 2. התיקון: שולפים מהדאטה-בייס רק את הטיולים ששייכים למשתמש הספציפי הזה!
+        // שולפים מהדאטה-בייס רק את הטיולים ששייכים למשתמש הספציפי הזה
         List<Trip> trips = tripRepo.findByUserId(currentUser.getId());
 
-        // 3. ממירים את הטיולים ל-DTO כפי שהיה קודם
+        //ממירים את הטיולים ל-DTO
         List<TripDTO> tripDTOs = trips.stream().map(trip -> {
             TripDTO dto = new TripDTO();
             dto.setId(trip.getId());
             dto.setTitle(trip.getTitle());
 
-            // ממירים ומחזירים את כל היומנים/התחנות המשויכים לטיול הזה
+            // ממירים ומחזירים את כל היומנים-התחנות המשויכים לטיול הזה
             if (trip.getJournalEntries() != null) {
                 dto.setJournalEntries(trip.getJournalEntries().stream()
                         .map(entityMapper::toDTO)
@@ -79,7 +79,6 @@ public class TripController {
     @PutMapping("/update/{id}")
     public ResponseEntity<?> updateTrip(@PathVariable Long id, @RequestBody TripDTO tripDTO, Authentication authentication) {
         try {
-            // (אופציונלי: אפשר לבדוק כאן שהטיול שייך למשתמש הנוכחי)
             Trip updatedTrip = tripService.updateTrip(id, tripDTO);
 
             return ResponseEntity.ok(Map.of(

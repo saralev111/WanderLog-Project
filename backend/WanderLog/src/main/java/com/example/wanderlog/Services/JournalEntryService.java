@@ -39,25 +39,25 @@ public class JournalEntryService {
     private AiRecommendationService aiRecommendationService;
 
     @Autowired
-    private RouteOptimizationService routeOptimizationService; // הזרקת האלגוריתם!
+    private RouteOptimizationService routeOptimizationService;
 
     private final String uploadDir = "uploads/";
 
     public String saveImage(MultipartFile file) throws Exception {
-        // 1. יצירת התיקייה אם היא לא קיימת
+        //  יצירת התיקייה אם היא לא קיימת
         Path copyLocation = Paths.get(uploadDir);
         if (!Files.exists(copyLocation)) {
             Files.createDirectories(copyLocation);
         }
 
-        // 2. יצירת שם ייחודי לקובץ (למשל: a1b2-image.jpg)
+        //  יצירת שם ייחודי לקובץ
         String fileName = UUID.randomUUID().toString() + "-" + file.getOriginalFilename();
 
-        // 3. שמירת הקובץ בתיקייה
+        //  שמירת הקובץ בתיקייה
         Path targetPath = copyLocation.resolve(fileName);
         Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
 
-        // 4. החזרת הנתיב (כדי לשמור אותו ב-DB)
+        //  החזרת הנתיב (כדי לשמור אותו ב-DB)
         return "/uploads/" + fileName;
     }
 
@@ -68,7 +68,7 @@ public class JournalEntryService {
             newJournalEntry.setDate(LocalDate.now());
         }
 
-        // הוספנו: חסימת יומן ציבורי אם הסטטוס אינו VISITED
+        //  חסימת יומן ציבורי אם הסטטוס אינו VISITED
         if (newJournalEntry.getStatus() != TravelStatus.VISITED) {
             newJournalEntry.setPublic(false);
         }
@@ -76,12 +76,13 @@ public class JournalEntryService {
         return journalEntryRepo.save(newJournalEntry);
     }
 
-    public Page<JournalEntry> getMyEntries(int page, int size) {
+    public List<JournalEntry> getMyEntries() {
         long currentUserId = userService.getCurrentUser().getId();
-        // עדכון: מיון קודם לפי סדר המסלול (visitOrder) ואז לפי החדש ביותר
-        Pageable pageable = PageRequest.of(page, size,
-                Sort.by(Sort.Direction.ASC, "visitOrder").and(Sort.by(Sort.Direction.DESC, "id")));
-        return journalEntryRepo.findByUserId(currentUserId, pageable);
+
+        Sort sort = Sort.by(Sort.Direction.ASC, "visitOrder")
+                .and(Sort.by(Sort.Direction.DESC, "id"));
+
+        return journalEntryRepo.findAllByUserId(currentUserId, sort);
     }
 
     public List<JournalEntry> searchByCountry(String country) {
@@ -100,6 +101,7 @@ public class JournalEntryService {
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
         return journalEntryRepo.findByIsPublicTrue(pageable);
     }
+
     @Transactional
     public JournalEntry updateEntry(Long id, JournalEntry details) {
         User currentUser = userService.getCurrentUser();
@@ -122,13 +124,10 @@ public class JournalEntryService {
         if (details.getVisitOrder() != null) existingEntry.setVisitOrder(details.getVisitOrder());
         if (details.getImageUrl() != null) existingEntry.setImageUrl(details.getImageUrl());
 
-        // --- התיקון: עדכון המיקום! ---
         if (details.getLocation() != null) {
             String placeId = details.getLocation().getGooglePlaceId();
-            // מחפשים אם המיקום החדש כבר קיים במאגר
             Location newLocation = locationRepo.findByGooglePlaceId(placeId)
                     .orElseGet(() -> {
-                        // אם לא, ניצור מיקום חדש
                         Location loc = new Location();
                         loc.setGooglePlaceId(placeId);
                         loc.setName(details.getLocation().getName());
@@ -138,10 +137,8 @@ public class JournalEntryService {
                         loc.setLongitude(details.getLocation().getLongitude());
                         return locationRepo.save(loc);
                     });
-            // מקשרים את היומן למיקום החדש
             existingEntry.setLocation(newLocation);
         }
-        // ----------------------------
 
         // וידוא סטטוס עבור פרסום פומבי
         if (existingEntry.getStatus() != TravelStatus.VISITED) {
@@ -153,7 +150,7 @@ public class JournalEntryService {
         return journalEntryRepo.save(existingEntry);
     }
 
-    @org.springframework.transaction.annotation.Transactional // חובה להוסיף כדי שהניתוק והמחיקה יקרו יחד!
+    @org.springframework.transaction.annotation.Transactional
     public void deleteEntry(long id) {
         User currentUser = userService.getCurrentUser();
 
@@ -167,92 +164,67 @@ public class JournalEntryService {
             throw new RuntimeException("אין לך הרשאה למחוק יומן זה.");
         }
 
-        // --- התיקון: ניתוק היומן מכל הטיולים שהוא מקושר אליהם ---
+        //   ניתוק היומן מכל הטיולים שהוא מקושר אליהם
         List<Trip> relatedTrips = tripRepo.findByJournalEntriesContaining(entry);
         for (Trip trip : relatedTrips) {
             trip.getJournalEntries().remove(entry);
-            tripRepo.save(trip); // שומרים את הטיול מחדש בלי היומן הזה
+            tripRepo.save(trip);
         }
-        // --------------------------------------------------------
-
-        // עכשיו שהיומן לא מקושר לאף טיול, אפשר למחוק אותו בבטחה!
         journalEntryRepo.delete(entry);
     }
 
-    public List<JournalEntry> getEntriesByStatus(Long userId, TravelStatus status) {
-        // שליפת כל היומנים של המשתמש שיש להם סטטוס מסוים
-        return journalEntryRepo.findByUserIdAndStatus(userId, status);
-    }
 
-    public Page<JournalEntry> getEntriesByUserId(long userId, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
-        return journalEntryRepo.findByUserId(userId, pageable);
-    }
+    //אלגוריתם הניתוב
+    public List<JournalEntry> optimizeAndSaveRoute(List<Long> entryIds) {
+        List<JournalEntry> entries = getEntriesInOrder(entryIds);
 
-    // ---------------------------------------------------------
-    // פונקציות חדשות לאלגוריתם הניתוב
-    // ---------------------------------------------------------
+        // חילוץ המיקומים מתוך היומנים כדי לשלוח לאלגוריתם
+        List<Location> locs = entries.stream()
+                .map(JournalEntry::getLocation)
+                .filter(loc -> loc != null)
+                .toList();
 
-    public List<JournalEntry> optimizeAndSaveRoute(List<Long> fixedEntryIds, List<Long> flexibleEntryIds) {
-        // 1. שליפת היומנים מהדאטה-בייס (תוך שמירה על הסדר שהמשתמש שלח)
-        List<JournalEntry> fixedEntries = getEntriesInOrder(fixedEntryIds);
-        List<JournalEntry> flexibleEntries = getEntriesInOrder(flexibleEntryIds);
+        List<Location> optimizedLocs = routeOptimizationService.optimizeRoute(locs);
 
-        // 2. חילוץ המיקומים מתוך היומנים כדי לשלוח לאלגוריתם
-        List<Location> fixedLocs = fixedEntries.stream().map(JournalEntry::getLocation).toList();
-        List<Location> flexibleLocs = flexibleEntries.stream().map(JournalEntry::getLocation).toList();
-
-        // 3. הרצת האלגוריתם! קבלת המיקומים מסודרים
-        List<Location> optimizedLocs = routeOptimizationService.optimizeDynamicRoute(fixedLocs, flexibleLocs);
-
-        // 4. חיבור בחזרה: עדכון ה-visitOrder ביומנים לפי הסדר שהאלגוריתם קבע
+        //  עדכון ה-visitOrder ביומנים לפי הסדר שהאלגוריתם קבע
         List<JournalEntry> optimizedEntries = new ArrayList<>();
-        List<JournalEntry> allEntriesPool = new ArrayList<>();
-        allEntriesPool.addAll(fixedEntries);
-        allEntriesPool.addAll(flexibleEntries);
-
         int currentOrder = 1;
 
         for (Location loc : optimizedLocs) {
-            // מציאת היומן ששייך למיקום הזה (שעוד לא שיבצנו)
-            JournalEntry matchedEntry = allEntriesPool.stream()
-                    .filter(e -> e.getLocation().getId() == loc.getId() && !optimizedEntries.contains(e))
+            // מציאת היומן ששייך למיקום הזה
+            JournalEntry matchedEntry = entries.stream()
+                    .filter(e -> e.getLocation() != null && e.getLocation().getId() == loc.getId() && !optimizedEntries.contains(e))
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException("שגיאה במיפוי היומן למיקום"));
 
-            // עדכון הסדר החדש!
+            // עדכון הסדר החדש
             matchedEntry.setVisitOrder(currentOrder++);
             optimizedEntries.add(matchedEntry);
         }
 
-        // 5. שמירת כל היומנים המעודכנים לדאטה-בייס
+        //  שמירת כל היומנים המעודכנים לדאטה-בייס
         return journalEntryRepo.saveAll(optimizedEntries);
     }
-
     // פונקציית עזר: שולפת יומנים ושומרת על הסדר המדויק של רשימת ה-IDs שהתקבלה
     private List<JournalEntry> getEntriesInOrder(List<Long> ids) {
         if (ids == null || ids.isEmpty()) return new ArrayList<>();
         List<JournalEntry> entries = journalEntryRepo.findAllById(ids);
-        // מיון הרשימה שתחזור בדיוק לפי הסדר שבו ה-IDs הועברו אלינו
         entries.sort(Comparator.comparingInt(e -> ids.indexOf(e.getId())));
         return entries;
     }
 
-    // בתוך JournalEntryService.java
 
     public String getAiTravelAdvice(List<Long> entryIds) {
-        // 1. שליפת היומנים מהדאטה-בייס
+
         List<JournalEntry> entries = journalEntryRepo.findAllById(entryIds);
 
-        // הגנה: אם הרשימה ריקה (למשל IDs שלא קיימים ב-H2), נחזיר הודעה מסודרת במקום לקרוס
         if (entries == null || entries.isEmpty()) {
             return "אופס! לא מצאתי את המקומות האלו במסלול שלך. כדאי לוודא שהיומנים קיימים בדאטה-בייס.";
         }
 
-        // 2. מיון "בטוח": אם visitOrder הוא null, נשים את היומן בסוף (999) כדי למנוע קריסה
         entries.sort(Comparator.comparingInt(e -> e.getVisitOrder() != null ? e.getVisitOrder() : 999));
 
-        // 3. בניית רשימת המקומות בצורה בטוחה
+        //  בניית רשימת המקומות בצורה בטוחה
         StringBuilder locationsList = new StringBuilder();
         for (JournalEntry e : entries) {
             // אם אין מיקום או שם למיקום, נשתמש בכותרת של היומן כברירת מחדל
@@ -277,7 +249,6 @@ public class JournalEntryService {
                 locationsList.toString()
         );
 
-        // 5. שליחה ל-AI והחזרת התשובה המיוחלת
         return aiRecommendationService.generateRecommendation(dynamicPrompt);
     }
 }

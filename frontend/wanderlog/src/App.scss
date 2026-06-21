@@ -1,0 +1,108 @@
+/* ==========================================================================
+   WanderLog - App.scss
+   קובץ עיצוב מרכזי המממש את דרישות ה-SCSS לפרויקט
+   ========================================================================== */
+
+// 1. אפשרות ראשונה: משתנים (Variables)
+$primary-color: #305031;       // צבע ירוק טיולים עמוק (לפי הלחצנים שלך)
+$secondary-color: #cca010;     // צבע זהב/חרדל (למצב עריכה והדגשות)
+$text-dark: #333333;
+$text-light: #ffffff;
+$bg-light: #fdfdfd;
+$border-color-soft: #e0e0e0;
+$border-radius-custom: 12px;
+$transition-speed: all 0.3s ease-in-out;
+
+// 2. אפשרות שנייה: מיקסינים (Mixins) לחסכון בלוגיקת עיצוב חוזרת
+@mixin flex-align-center {
+  display: flex;
+  align-items: center;
+}
+
+@mixin card-shadow-subtle {
+  box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+// 3. אפשרות שלישית: קינון (Nesting) של סלקטורים
+.wanderlog-app-root {
+  font-family: 'Roboto', 'Segoe UI', 'Arial', sans-serif;
+  background-color: $bg-light;
+  color: $text-dark;
+  min-height: 100vh;
+
+  // קינון עבור עטיפת התוכן הראשי (Main Content Wrapper)
+  .main-content-area {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+
+    // קינון של כותרות בתוך אזור התוכן
+    .section-main-title {
+      color: $primary-color;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 30px;
+      
+      // קינון אלמנטים מדומים (Pseudo-elements)
+      &::after {
+        content: '';
+        display: block;
+        width: 50px;
+        height: 4px;
+        background-color: $secondary-color;
+        margin: 8px auto 0;
+        border-radius: 2px;
+      }
+    }
+
+    // עיצוב קינון לכרטיסיות יומן/מסלולים (Trip Cards)
+    .travel-card-item {
+      background-color: $text-light;
+      border-radius: $border-radius-custom;
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px solid $border-color-soft;
+      transition: $transition-speed;
+      @include card-shadow-subtle; // שימוש במיקסין צללית
+
+      // קינון מצבי אפקט (Pseudo-classes)
+      &:hover {
+        transform: translateY(-3px);
+        box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.12);
+      }
+
+      .card-top-header {
+        @include flex-align-center; // שימוש במיקסין פלקס
+        justify-content: space-between;
+        border-bottom: 1px solid $border-color-soft;
+        padding-bottom: 12px;
+
+        h3 {
+          color: $primary-color;
+          margin: 0;
+          font-size: 1.3rem;
+        }
+      }
+
+      .card-body-description {
+        padding-top: 15px;
+        font-size: 1rem;
+        line-height: 1.6;
+        color: #555;
+      }
+    }
+  }
+
+  // התאמה אופציונלית לטופס היומן שלך (JournalForm) בעת מעבר לעריכה
+  .edit-mode-container {
+    border: 2px solid $secondary-color !important;
+    animation: border-glow 1s ease-in-out;
+  }
+}
+
+// הגדרת אנימציה פשוטה
+@keyframes border-glow {
+  0% { box-shadow: 0 0 5px rgba(204, 160, 16, 0.2); }
+  50% { box-shadow: 0 0 15px rgba(204, 160, 16, 0.6); }
+  100% { box-shadow: 0 0 5px rgba(204, 160, 16, 0.2); }
+}

@@ -37,20 +37,19 @@ public class JournalEntryController {
             @RequestPart("entry") String entryJson,
             @RequestPart("image") MultipartFile image) throws Exception { // הוספת throws Exception
 
-        // 1. הפיכת ה-JSON לאובייקט
+        //  הפיכת ה-JSON לאובייקט
         ObjectMapper objectMapper = new ObjectMapper();
         // חשוב: אם יש לך תאריכים (LocalDate), צריך לרשום מודול מתאים ב-ObjectMapper
         objectMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
         JournalEntry entry = objectMapper.readValue(entryJson, JournalEntry.class);
 
-        // 2. שמירת התמונה וקבלת הנתיב
+        //  שמירת התמונה וקבלת הנתיב
         String imagePath = journalEntryService.saveImage(image);
         entry.setImageUrl(imagePath);
 
-        // 3. שמירת היומן
+        //  שמירת היומן
         JournalEntry savedEntry = journalEntryService.addEntry(entry);
 
-        // תיקון שורה 42: קריאה ישירה למתודה במקום Method Reference
         return ResponseEntity.ok(entityMapper.toDTO(savedEntry));
     }
 
@@ -73,32 +72,16 @@ public class JournalEntryController {
     }
 
     @GetMapping("/my-entries")
-    public ResponseEntity<Page<JournalEntryDTO>> getMyEntries(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+    public ResponseEntity<List<JournalEntryDTO>> getMyEntries() {
 
-        Page<JournalEntryDTO> dtos = journalEntryService.getMyEntries(page, size)
-                .map(entityMapper::toDTO);
+        List<JournalEntryDTO> dtos = journalEntryService.getMyEntries()
+                .stream()
+                .map(entityMapper::toDTO)
+                .toList();
 
         return ResponseEntity.ok(dtos);
     }
 
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<Page<JournalEntryDTO>> getEntriesByUser(
-            @PathVariable long userId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-
-        // 1. נשתמש ב-Pageable כדי ליצור את בקשת הדף
-        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
-
-        // 2. נקרא לפונקציה ב-Repo (דרך ה-Service או ישירות אם ה-Service חסר כרגע)
-        // הערה: אם מחקת את המתודה מה-Service, כדאי להוסיף אותה שם קודם (ראי למטה)
-        Page<JournalEntryDTO> entries = journalEntryService.getEntriesByUserId(userId, page, size)
-                .map(entry -> entityMapper.toDTO(entry)); // שימוש בלאמדה פותר את ה-Ambiguous
-
-        return ResponseEntity.ok(entries);
-    }
 
     @PutMapping("/{id}")
     public ResponseEntity<?> updateEntry(@PathVariable Long id,@Valid @RequestBody JournalEntry details) {
@@ -112,12 +95,12 @@ public class JournalEntryController {
             @RequestPart("entry") String entryJson,
             @RequestPart(value = "image", required = false) MultipartFile image) throws Exception {
 
-        // 1. הפיכת ה-JSON לאובייקט
+        //  הפיכת ה-JSON לאובייקט
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
         JournalEntry details = objectMapper.readValue(entryJson, JournalEntry.class);
 
-        // 2. אם המשתמש בחר תמונה חדשה, נשמור אותה ונעדכן את הנתיב
+        //  אם המשתמש בחר תמונה חדשה, נשמור אותה ונעדכן את הנתיב
         if (image != null && !image.isEmpty()) {
             String imagePath = journalEntryService.saveImage(image);
             details.setImageUrl(imagePath);
@@ -159,10 +142,9 @@ public class JournalEntryController {
     @PostMapping("/optimize-route")
     public ResponseEntity<List<JournalEntryDTO>> optimizeRoute(@RequestBody RouteRequest request) {
 
-        // קריאה לאלגוריתם שכתבנו
+        // קריאה לאלגוריתם שכתבנו - עכשיו מעביר רשימה אחת בלבד!
         List<JournalEntry> optimizedEntries = journalEntryService.optimizeAndSaveRoute(
-                request.getFixedEntryIds(),
-                request.getFlexibleEntryIds()
+                request.getEntryIds()
         );
 
         // המרה ל-DTO והחזרה למשתמש
@@ -172,7 +154,6 @@ public class JournalEntryController {
 
         return ResponseEntity.ok(dtos);
     }
-
     @Autowired
     private AiRecommendationService aiService;
 

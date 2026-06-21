@@ -37,9 +37,8 @@ public class TripService {
             // עוברים על מספרי ה-ID בדיוק לפי הסדר שהלקוח (React) שלח
             for (Long id : tripDTO.getJournalEntryIds()) {
                 for (JournalEntry entry : existingEntries) {
-                    // התיקון כאן: שימוש ב- == במקום .equals()
                     if (entry.getId() == id) {
-                        entry.setVisitOrder(orderIndex); // קובעים את מיקום התחנה (1, 2, 3...)
+                        entry.setVisitOrder(orderIndex);
                         orderedEntries.add(entry);
                         orderIndex++;
                         break;
@@ -61,10 +60,8 @@ public class TripService {
         Trip trip = tripRepo.findById(tripId)
                 .orElseThrow(() -> new RuntimeException("טיול לא נמצא"));
 
-        // עדכון השם
         trip.setTitle(tripDTO.getTitle());
 
-        // עדכון היעדים (JournalEntries) ושמירה על סדר התחנות
         if (tripDTO.getJournalEntryIds() != null && !tripDTO.getJournalEntryIds().isEmpty()) {
             List<JournalEntry> existingEntries = journalEntryRepo.findAllById(tripDTO.getJournalEntryIds());
             List<JournalEntry> orderedEntries = new ArrayList<>();
@@ -73,7 +70,6 @@ public class TripService {
             // סידור מחדש בדיוק כמו בשמירה
             for (Long id : tripDTO.getJournalEntryIds()) {
                 for (JournalEntry entry : existingEntries) {
-                    // התיקון כאן: שימוש ב- == במקום .equals()
                     if (entry.getId() == id) {
                         entry.setVisitOrder(orderIndex);
                         orderedEntries.add(entry);

@@ -20,13 +20,11 @@ public class LocationController {
 
     @Autowired
     private EntityMapper entityMapper;
-    // בדיקה שהכל עובד - GET /locations/hello
     @GetMapping("/hello")
     public String sayHello() {
         return "Hello from WanderLog locations!";
     }
 
-    // שליפת כל המיקומים - GET /locations
     @GetMapping
     public ResponseEntity<?> getLocations(){
         List<LocationDTO> locations = locationService.getAllLocations()
@@ -34,8 +32,7 @@ public class LocationController {
         return ResponseEntity.ok(locations);
     }
 
-    // הוספת מיקום חדש - POST /locations/add
-    // (השארתי את ה-/add כפי שכתבת, אבל שתדעי שנהוג להוריד אותו בפרויקטים גדולים)
+    //  POST /locations/add
     @PostMapping
     public ResponseEntity<?> addLocation(@RequestBody Location location) {
         Location savedLocation=locationService.addLocation(location);
@@ -43,14 +40,14 @@ public class LocationController {
     }
 
 
-    // עדכון מיקום - PUT /locations/{id}
+    //  PUT /locations/{id}
     @PutMapping("/{id}")
     public ResponseEntity<?> updateLocation(@PathVariable Long id, @RequestBody Location details) {
         Location updatedLocation = locationService.updateLocation(id, details);
         return ResponseEntity.ok(entityMapper.toDTO(updatedLocation));
     }
 
-    // מחיקת מיקום - DELETE /locations/{id}
+    // DELETE /locations/{id}
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteLocation(@PathVariable Long id) {
         locationService.deleteLocation(id);

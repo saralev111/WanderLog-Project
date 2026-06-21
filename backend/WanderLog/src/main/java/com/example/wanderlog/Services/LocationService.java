@@ -30,7 +30,6 @@ public class LocationService {
     }
 
     public Location updateLocation(Long id, Location details) {
-        // שינוי: 404 אם המיקום לא נמצא
         Location loc = locationRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("שגיאה: מיקום עם ID " + id + " לא נמצא"));
 

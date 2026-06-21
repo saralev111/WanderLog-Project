@@ -30,7 +30,6 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // מאשרים את כל סביבות הפיתוח המוכרות של ריאקט
         configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:3000",
                 "http://localhost:5173",
@@ -54,20 +53,12 @@ public class SecurityConfig {
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        // נתיבים ציבוריים שלא דורשים טוקן
                         .requestMatchers("/users/login", "/users/register").permitAll()
                         .requestMatchers(HttpMethod.GET, "/journals/public").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
-
-
-                        // הרשאות למנהל בלבד
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
-
-                        // הרשאות למחיקה
                         .requestMatchers(HttpMethod.DELETE, "/journals/**").hasAnyRole("ADMIN", "USER")
-
-                        // כל שאר הבקשות (כולל journals/ai-advice) דורשות טוקן תקין!
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
