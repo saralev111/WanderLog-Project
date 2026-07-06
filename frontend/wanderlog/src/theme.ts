@@ -1,29 +1,29 @@
 import { createTheme } from '@mui/material/styles';
 
 export const travelTheme = createTheme({
-  direction: 'rtl', // תמיכה מימין לשמאל ב-MUI
+  direction: 'rtl', 
   palette: {
     mode: 'light',
     primary: {
-      main: '#2E4835', // ירוק וינטג' עמוק
+      main: '#2E4835', 
       contrastText: '#ffffff',
     },
     background: {
-      default: '#F3EFE6', // צבע קרם/דף ישן וחמים יותר
+      default: '#F3EFE6', 
       paper: 'transparent',
     },
     text: {
-      primary: '#3A312A', // חום/שחור רך
+      primary: '#3A312A', 
       secondary: '#6E6157',
     },
   },
   typography: {
     fontFamily: '"Assistant", "sans-serif"',
     h3: {
-      fontFamily: '"Caveat", cursive', // ללוגו
+      fontFamily: '"Caveat", cursive', 
     },
     h5: {
-      fontFamily: '"Lora", serif', // לכותרות
+      fontFamily: '"Lora", serif', 
       fontWeight: 600,
     },
   },
@@ -35,7 +35,7 @@ export const travelTheme = createTheme({
           fontWeight: 600,
           fontSize: '1.1rem',
           padding: '10px 24px',
-          borderRadius: '6px', // פחות עגול, יותר קלאסי
+          borderRadius: '6px', 
           boxShadow: 'none',
           '&:hover': {
             boxShadow: 'none',
@@ -44,17 +44,16 @@ export const travelTheme = createTheme({
         },
       },
     },
-    // הפיכת שדות הקלט למראה של "שורות במחברת"
     MuiTextField: {
       defaultProps: {
-        variant: 'standard', // רק קו תחתון
+        variant: 'standard', 
       },
     },
     MuiInput: {
       styleOverrides: {
         root: {
           fontSize: '1.1rem',
-          '&:before': { borderBottom: '1px solid #C4B9A3' }, // צבע קו תחתון במצב רגיל
+          '&:before': { borderBottom: '1px solid #C4B9A3' }, 
         }
       }
     },

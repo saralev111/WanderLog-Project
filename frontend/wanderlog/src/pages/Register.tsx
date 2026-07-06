@@ -18,7 +18,6 @@ export default function Register() {
                 role: 'ROLE_USER'
             }).unwrap();
 
-            // לאחר הרשמה מוצלחת אפשר להפנות את המשתמש למסך ההתחברות לאחר כמה שניות
             setTimeout(() => navigate('/login'), 2500);
         } catch (err) {
             console.error('Registration failed:', err);

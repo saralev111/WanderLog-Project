@@ -10,7 +10,6 @@ import {
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import MapSelector from './MapSelector';
 
-// הגדרנו שדה נפרד לשם המקום (placeName) ושדה למדינה (country) שהמפה תמלא ברקע
 interface JournalFormInputs {
   title: string;
   description: string;
@@ -34,10 +33,8 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
     defaultValues: { title: '', description: '', placeName: '', country: '', date: new Date().toISOString().split('T')[0], rating: 5, status: 'VISITED', isPublic: false }
   });
 
-  // סטייטים להודעות קופצות
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
   
-  // סטייט לחלון אישור מחיקה
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
 
   const handleCloseSnackbar = () => {
@@ -64,8 +61,8 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
         status: editData.status as 'VISITED' | 'WISHLIST',
         latitude: editData.location?.latitude,
         longitude: editData.location?.longitude,
-        placeName: editData.location?.name || '',    // שואב את שם המקום הישן
-        country: editData.location?.country || '',   // שואב את המדינה הישנה
+        placeName: editData.location?.name || '',    
+        country: editData.location?.country || '',   
         rating: editData.rating || 5,
         isPublic: editData.isPublic ?? (editData as any).public ?? false
       });
@@ -89,12 +86,10 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
     if (e.target.files && e.target.files[0]) setSelectedImage(e.target.files[0]);
   };
 
-  // פונקציה שרק פותחת את דיאלוג המחיקה
   const handleDeleteClick = () => {
     setOpenDeleteDialog(true);
   };
 
-  // פונקציה שמבצעת את המחיקה בפועל
   const confirmDelete = async () => {
     setOpenDeleteDialog(false);
     if (editData) {
@@ -115,7 +110,6 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
         isEditMode &&
         editData?.location &&
         (data.latitude !== editData.location.latitude || data.longitude !== editData.location.longitude);
-      // מרכיבים את המיקום בצורה חכמה: המדינה מהמפה, והשם מהשדה שהמשתמש הקליד
       const finalLocation = {
         country: data.country || 'לא צוינה מדינה',
         name: data.placeName,
@@ -169,7 +163,6 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
 
   const isSubmitting = isCreating || isCreatingWithImage || isUpdating || isUpdatingWithImage;
 
-  // חישוב התמונה לתצוגה מקדימה
   const imagePreviewUrl = selectedImage
     ? URL.createObjectURL(selectedImage)
     : editData?.imageUrl
@@ -184,7 +177,6 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
 
       <TextField label="כותרת הטיול" variant="outlined" fullWidth {...register('title', { required: 'חובה להזין כותרת' })} error={!!errors.title} helperText={errors.title?.message} />
 
-      {/* השדה החדש של שם המקום */}
       <TextField label="שם המקום (לדוגמה: הבקתה של יאיר, העיר העתיקה)" variant="outlined" fullWidth {...register('placeName', { required: 'חובה להזין את שם היעד/המקום' })} error={!!errors.placeName} helperText={errors.placeName?.message} />
 
       <TextField label="תאריך הטיול" type="date" variant="outlined" fullWidth slotProps={{ inputLabel: { shrink: true } }} {...register('date', { required: 'חובה לבחור תאריך' })} error={!!errors.date} helperText={errors.date?.message} />
@@ -246,7 +238,6 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
               control={control}
               render={({ field: { value: lngValue } }) => (
                 <MapSelector
-                  // הנה השדרוג: המפה מזינה את השדה הנסתר 'country' שמועבר לשרת!
                   onLocationSelect={(lat, lng, fetchedCountry) => {
                     setValue('latitude', lat, { shouldValidate: true, shouldDirty: true });
                     setValue('longitude', lng, { shouldValidate: true, shouldDirty: true });
@@ -272,7 +263,6 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
         {...register('description')}
       />
 
-      {/* אזור העלאת התמונה עם התצוגה המקדימה שיצרנו קודם! */}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'center', p: 2, border: '1px dashed #ccc', borderRadius: '8px', backgroundColor: '#fafafa' }}>
         {imagePreviewUrl && (
           <Box
@@ -297,7 +287,6 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
           {isEditMode && <Button variant="outlined" color="secondary" onClick={onCancelEdit} disabled={isSubmitting || isDeleting}>ביטול</Button>}
         </Box>
 
-        {/* כפתור המחיקה יופיע רק במצב עריכה בצד שמאל */}
         {isEditMode && (
           <Button 
             variant="outlined" 
@@ -311,9 +300,7 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
         )}
       </Box>
 
-      {/* --- רכיבי הודעות ואישורים --- */}
       
-      {/* הודעות קופצות - Snackbar */}
       <Snackbar 
         open={snackbar.open} 
         autoHideDuration={4000} 
@@ -330,14 +317,12 @@ const JournalForm = ({ editData, onCancelEdit }: JournalFormProps) => {
         </Alert>
       </Snackbar>
 
-      {/* חלון אישור מחיקה - Dialog */}
       <Dialog
         open={openDeleteDialog}
         onClose={() => setOpenDeleteDialog(false)}
-        // הפתרון לשגיאת ה-TypeScript: עיצוב המחלקה הפנימית ישירות דרך sx
         sx={{
           '& .MuiDialog-paper': {
-            backgroundColor: '#ffffff', // מכריח רקע לבן ואטום
+            backgroundColor: '#ffffff', 
             borderRadius: '12px',
             boxShadow: '0px 8px 24px rgba(0,0,0,0.2)',
             padding: 1

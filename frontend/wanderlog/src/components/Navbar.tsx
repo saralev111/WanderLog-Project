@@ -48,7 +48,6 @@ export default function Navbar() {
     >
       <Toolbar sx={{ justifyContent: 'space-between' }}>
 
-        {/* צד ימין - לוגו */}
         <Box
           component={RouterLink}
           to="/"
@@ -60,7 +59,6 @@ export default function Navbar() {
           </Typography>
         </Box>
 
-        {/* אמצע - כל הקישורים בעיצוב אחיד */}
         <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexGrow: 1 }}>
           <Button component={RouterLink} to="/" sx={navButtonSx}>
             ראשי

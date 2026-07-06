@@ -9,10 +9,9 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import RouteIcon from '@mui/icons-material/Route';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import MapIcon from '@mui/icons-material/Map';
-import EditIcon from '@mui/icons-material/Edit'; // ייבוא האייקון של העריכה
-import { useNavigate } from 'react-router-dom'; // ייבוא הניווט
+import EditIcon from '@mui/icons-material/Edit'; 
+import { useNavigate } from 'react-router-dom'; 
 
-// אייקון ממוספר קטן למפת התצוגה המקדימה
 const createMiniNumberedIcon = (number: number) => {
     return L.divIcon({
         className: 'mini-numbered-icon',
@@ -22,7 +21,6 @@ const createMiniNumberedIcon = (number: number) => {
     });
 };
 
-// עדכון גבולות המפה הקטנה באופן אוטומטי לפי נקודות הציון
 const MiniMapBounds = ({ coords }: { coords: [number, number][] }) => {
     const map = useMap();
     if (coords.length > 0) {
@@ -32,28 +30,23 @@ const MiniMapBounds = ({ coords }: { coords: [number, number][] }) => {
     return null;
 };
 
-// רכיב כרטיסיית הטיול הבודד
 function TripCard({ trip }: { trip: any }) {
     const [expanded, setExpanded] = useState(false);
-    const navigate = useNavigate(); // הגדרת משתנה הניווט
+    const navigate = useNavigate(); 
 
-    // מיון התחנות לפי סדר הביקור (visitOrder)
     const sortedEntries = trip.journalEntries
         ? [...trip.journalEntries].sort((a: any, b: any) => (a.visitOrder || 0) - (b.visitOrder || 0))
         : [];
 
-    // חילוץ תמונה נבחרת ראשונה מהתחנות, או תמונת ברירת מחדל
     const firstWithImage = sortedEntries.find((e: any) => e.imageUrl);
     const featuredImage = firstWithImage
         ? `http://localhost:9090${firstWithImage.imageUrl}`
         : '/journal-bg.png';
 
-    // חילוץ קורדינטות למפה
     const mapCoords: [number, number][] = sortedEntries
         .filter((e: any) => e.location && e.location.latitude && e.location.longitude)
         .map((e: any) => [e.location.latitude, e.location.longitude]);
 
-    // הפונקציה שבונה קישור ניווט ל-Google Maps
     const generateGoogleMapsLink = () => {
         const coords = sortedEntries
             .filter((e: any) => e.location?.latitude && e.location?.longitude)
@@ -128,7 +121,6 @@ function TripCard({ trip }: { trip: any }) {
                 )}
 
                 <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', pt: 1 }}>
-                    {/* הכפתור החדש - מעבר לעריכת המסלול */}
                     <Button
                         size="small"
                         variant="outlined"

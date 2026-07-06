@@ -11,7 +11,6 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   const isAuthenticated = useSelector((state: any) => state.auth.isAuthenticated);
 
-  // כאן מגיעה הבדיקה של שומר הסף:
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }

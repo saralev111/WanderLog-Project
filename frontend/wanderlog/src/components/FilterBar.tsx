@@ -3,7 +3,7 @@ import { Box, TextField, FormControl, InputLabel, Select, MenuItem, Button } fro
 
 interface FilterBarProps {
   onSearch: (type: 'keyword' | 'country' | 'rating' | 'none', value: any) => void;
-  availableCountries: string[]; // <--- הוספנו את רשימת המדינות ל-Props
+  availableCountries: string[]; 
 }
 
 const FilterBar = ({ onSearch, availableCountries }: FilterBarProps) => {
@@ -55,7 +55,6 @@ const FilterBar = ({ onSearch, availableCountries }: FilterBarProps) => {
     },
   };
 
-  // משתנה עזר כדי לשמור על גובה אחיד לכולם!
   const unifiedHeight = '40px';
 
   return (
@@ -67,10 +66,9 @@ const FilterBar = ({ onSearch, availableCountries }: FilterBarProps) => {
       backgroundColor: '#f5f5f5', 
       p: 2, 
       borderRadius: '8px', 
-      alignItems: 'center' // מחזירים למרכז, כי הגדרנו גובה ידני
+      alignItems: 'center' 
     }}>
       
-      {/* 1. סינון לפי דירוג */}
       <FormControl size="small" sx={{ minWidth: 140 }}>
         <InputLabel id="rating-label">מינימום דירוג</InputLabel>
         <Select 
@@ -88,7 +86,6 @@ const FilterBar = ({ onSearch, availableCountries }: FilterBarProps) => {
         </Select>
       </FormControl>
 
-      {/* 2. חיפוש חופשי (משולב עם כפתור החיפוש - הורחב!) */}
       <Box sx={{ display: 'flex', flexGrow: 4, gap: 1 }}>
         <TextField
           label="חיפוש חופשי..."
@@ -106,7 +103,7 @@ const FilterBar = ({ onSearch, availableCountries }: FilterBarProps) => {
             height: unifiedHeight,
             backgroundColor: '#305031', 
             '&:hover': { backgroundColor: '#437045' },
-            minWidth: '100px', // קצת הרחבתי גם את הכפתור שייראה פרופורציונלי
+            minWidth: '100px', 
             fontWeight: 'bold',
             boxShadow: 'none'
           }}
@@ -115,7 +112,6 @@ const FilterBar = ({ onSearch, availableCountries }: FilterBarProps) => {
         </Button>
       </Box>
       
-      {/* 3. סינון לפי מדינה */}
       <FormControl size="small" sx={{ minWidth: 140 }}>
         <InputLabel id="country-label">מדינה</InputLabel>
         <Select 
@@ -124,22 +120,20 @@ const FilterBar = ({ onSearch, availableCountries }: FilterBarProps) => {
           label="מדינה" 
           onChange={handleCountryChange}
           MenuProps={dropdownMenuProps}
-          sx={{ height: unifiedHeight }} // הכרחת גובה
+          sx={{ height: unifiedHeight }} 
         >
           <MenuItem value=""><em>הכל</em></MenuItem>
-          {/* --- תפריט דינמי שמושך את המדינות הקיימות --- */}
           {availableCountries.map((c) => (
             <MenuItem key={c} value={c}>{c}</MenuItem>
           ))}
         </Select>
       </FormControl>
 
-      {/* כפתור ניקוי תנאים */}
       <Button 
         variant="text" 
         onClick={clearFilters} 
         sx={{ 
-          height: unifiedHeight, // הכרחת גובה שיהיה מיושר עם כולם
+          height: unifiedHeight, 
           color: '#d32f2f', 
           fontWeight: 'bold',
           whiteSpace: 'nowrap'

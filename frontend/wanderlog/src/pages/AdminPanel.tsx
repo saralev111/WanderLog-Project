@@ -32,7 +32,6 @@ const AdminPanel = () => {
   
   if (error) return <Typography color="error" sx={{ p: 4 }}>שגיאה בטעינת משתמשים. ייתכן שאין לך הרשאות ניהול.</Typography>;
 
-  // מסנן החוצה את המנהל הנוכחי כדי שלא ימחק את עצמו
   const filteredUsers = users?.filter((user: any) => user.userName !== currentUsername);
 
   return (
@@ -71,7 +70,6 @@ const AdminPanel = () => {
         onClose={() => setOpenDialog(false)}
         dir="rtl"
         sx={{
-          // אנחנו מעלימים את הרקע של חלון ה-MUI דרך sx, ש-TypeScript תמיד מכיר ומאשר!
           '& .MuiDialog-paper': {
             backgroundColor: 'transparent',
             boxShadow: 'none',
@@ -79,13 +77,12 @@ const AdminPanel = () => {
           }
         }}
       >
-        {/* הקופסה האטומה שלנו! היא זו שתחזיק את התוכן ותהיה עם רקע לבן אמיתי */}
         <Box sx={{ 
-          bgcolor: 'white', // לבן אטום ב-100%
+          bgcolor: 'white', 
           borderRadius: 3, 
           p: 1, 
           minWidth: 380,
-          boxShadow: '0px 10px 30px rgba(0,0,0,0.5)' // הצללה יפה משלנו
+          boxShadow: '0px 10px 30px rgba(0,0,0,0.5)' 
         }}>
           <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'error.main', fontWeight: 'bold' }}>
             ⚠️ אזהרת מחיקה חמורה

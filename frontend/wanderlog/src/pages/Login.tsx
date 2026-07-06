@@ -15,10 +15,8 @@ export default function Login() {
 
   const onSubmit = async (data: any) => {
     try {
-      // 1. התשובה מהשרת נשמרת במשתנה "result"
       const result = await loginUser({ userName: data.userName, password: data.password }).unwrap();
 
-      // 2. לכן אנחנו צריכים לשלוף את הטוקן מתוך "result"
       dispatch(setCredentials({ 
         token: result.token, 
         username: data.userName 
@@ -59,7 +57,6 @@ export default function Login() {
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)' 
           }}
         >
-          {/* לוגו עם המצפן */}
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, color: '#3A312A' }}>
             <ExploreIcon sx={{ fontSize: 36, mr: 1, ml: 1, color: 'primary.main' }} />
             <Typography component="h1" variant="h3" sx={{ fontWeight: 'bold', fontFamily: '"Caveat", cursive', letterSpacing: '2px' }}>

@@ -19,12 +19,9 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
   api,
   extraOptions
 ) => {
-  // קודם כל, מוציאים את הבקשה לשרת כרגיל
   let result = await baseQuery(args, api, extraOptions);
 
-  // בודקים אם יש שגיאה, ואם הקוד שלה הוא 401
   if (result.error && result.error.status === 401) {
-    // השרת אמר שהטוקן פג תוקף! מפעילים מיד את פקודת ההתנתקות
     api.dispatch(logout());
   }
   return result;
@@ -85,7 +82,7 @@ export const journalApi = createApi({
 
     updateEntryWithImage: builder.mutation({
       query: ({ id, formData }) => ({
-        url: `/${id}/with-image`, // פונה לנתיב החדש שיצרנו בשרת
+        url: `/${id}/with-image`,
         method: 'PUT',
         body: formData,
       }),
@@ -97,7 +94,7 @@ export const journalApi = createApi({
         url: `/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['Journals'], // מרענן את רשימת היומנים אוטומטית אחרי המחיקה
+      invalidatesTags: ['Journals'], 
     }),
     
     optimizeRoute: builder.mutation({
@@ -110,20 +107,19 @@ export const journalApi = createApi({
     
     createEntryWithImage: builder.mutation({
       query: (formData: FormData) => ({
-        url: '/with-image', // פונה לנתיב המיוחד בשרת שמטפל בתמונות
+        url: '/with-image', 
         method: 'POST',
         body: formData,
       }),
       invalidatesTags: ['Journals'], 
     }),
 
-    // --- הוספנו את ה-AI כאן ---
     getAiAdvice: builder.mutation({
       query: (ids: number[]) => ({
         url: '/ai-advice',
         method: 'POST',
         body: ids,
-        responseHandler: 'text', // חובה כדי שהשרת יוכל להחזיר טקסט רגיל
+        responseHandler: 'text', 
       }),
     }),
     

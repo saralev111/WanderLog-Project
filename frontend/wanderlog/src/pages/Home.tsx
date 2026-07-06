@@ -5,7 +5,6 @@ import {
   DialogTitle, DialogContent, DialogContentText, DialogActions as MuiDialogActions
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
-// ייבאנו גם את פונקציית המחיקה:
 import { useGetPublicEntriesQuery, useDeleteEntryMutation } from '../app/api/journalApi';
 import { useDispatch, useSelector } from 'react-redux';
 import { toggleRouteEntry } from '../features/routeSlice';
@@ -19,17 +18,14 @@ export default function Home() {
   const { data, isLoading, error, isFetching } = useGetPublicEntriesQuery({ page: page, size: size });
   const [deleteEntry, { isLoading: isDeleting }] = useDeleteEntryMutation();
 
-  // שואבים את הסטטוס ואת תפקיד המשתמש מ-Redux
   const isAuthenticated = useSelector((state: any) => state.auth.isAuthenticated);
   const userRole = useSelector((state: any) => state.auth.role);
 
-  // בודקים האם המשתמש הוא מנהל
   const isAdmin = userRole === 'ROLE_ADMIN';
 
   const dispatch = useDispatch();
   const selectedRouteEntries = useSelector((state: RootState) => state.route.selectedEntries);
 
-  // סטייטים לחלון מחיקת יומן
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState<number | null>(null);
 
@@ -102,7 +98,6 @@ export default function Home() {
         </Container>
       </Box>
 
-      {/* אזור כרטיסיות היומנים */}
       <Container maxWidth="lg" sx={{ py: 8 }}>
         <Typography variant="h4" sx={{ fontFamily: '"Lora", serif', color: '#3A312A', mb: 5, textAlign: 'center', fontWeight: 'bold' }}>
           הרפתקאות אחרונות מהקהילה
@@ -111,7 +106,6 @@ export default function Home() {
         {(isLoading || isFetching) && <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}><CircularProgress color="success" /></Box>}
         {error && <Typography color="error" align="center" sx={{ my: 4, fontWeight: 'bold' }}>שגיאה בטעינת היומנים. ודאו שהשרת פועל.</Typography>}
 
-        {/* רשת הכרטיסיות */}
         <Box
           sx={{
             display: 'grid',
@@ -142,7 +136,6 @@ export default function Home() {
                   }
                 }}
               >
-                {/* כפתור מחיקה - מוצג רק למנהל! */}
                 {isAdmin && (
                   <IconButton
                     onClick={() => handleDeleteClick(entry.id)}
@@ -236,7 +229,6 @@ export default function Home() {
 
       </Container>
 
-      {/* דיאלוג אזהרה למחיקה - מוצג רק למנהל שמנסה למחוק */}
       <Dialog
         open={openDeleteDialog}
         onClose={() => setOpenDeleteDialog(false)}

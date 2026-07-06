@@ -4,15 +4,13 @@ import type { RootState } from '../features/store';
 import { Box, Typography, Card, CardContent, Avatar, Divider } from '@mui/material';
 
 const Profile = () => {
-  // שליפת שם המשתמש הנוכחי מתוך ה-Redux שחברה שלך הקימה!
-// שולפים את שם המשתמש הרשמי מתוך ה-Redux
+
 const user = useSelector((state: RootState) => state.auth.username);
   return (
     <Box sx={{ p: 4, maxWidth: 600, margin: 'auto', mt: 4 }}>
       <Card sx={{ borderRadius: '16px', boxShadow: '0px 4px 20px rgba(0,0,0,0.08)', p: 2 }}>
         <CardContent sx={{ textAlign: 'center' }}>
           
-          {/* אווטאר גדול עם האות הראשונה של שם המשתמש */}
           <Avatar 
             sx={{ 
               width: 90, 
@@ -36,11 +34,10 @@ const user = useSelector((state: RootState) => state.auth.username);
 
           <Divider sx={{ mb: 3 }} />
 
-          {/* התיקון: שימוש ב-CSS Grid פשוט ונקי דרך ה-Box במקום רכיב ה-Grid הישן */}
           <Box 
             sx={{ 
               display: 'grid', 
-              gridTemplateColumns: '1fr 2fr', // מחלק את הרוחב לשליש (כותרת) ושני שליש (ערך)
+              gridTemplateColumns: '1fr 2fr', 
               gap: 2.5, 
               textAlign: 'right', 
               dir: 'rtl',

@@ -1,10 +1,10 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { authApi } from '../app/api/authApi';
-import { journalApi } from '../app/api/journalApi'; // הוספנו את הייבוא הזה
+import { journalApi } from '../app/api/journalApi'; 
 import authReducer from './authSlice';
 import { adminApi } from '../app/api/adminApi';
 import routeReducer from './routeSlice';
-import { tripApi } from '../app/api/tripApi'; // <-- 1. ייבוא ה-API החדש
+import { tripApi } from '../app/api/tripApi'; 
 
 export const store = configureStore({
   reducer: {
@@ -16,7 +16,6 @@ export const store = configureStore({
     route: routeReducer,
   },
   middleware: (getDefaultMiddleware) =>
-    // חיברנו גם את המידלוור של היומנים
     getDefaultMiddleware().concat(authApi.middleware, journalApi.middleware,adminApi.middleware, tripApi.middleware),
 });
 

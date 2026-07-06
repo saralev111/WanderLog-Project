@@ -15,7 +15,6 @@ const Dashboard = () => {
 
   const { data: entriesData, isLoading, isError } = useGetMyEntriesQuery(undefined);
 
-  // הגדרות Redux עבור סל היעדים
   const dispatch = useDispatch();
   const selectedRouteEntries = useSelector((state: RootState) => state.route.selectedEntries);
 
@@ -70,7 +69,7 @@ const myEntriesArray = Array.isArray(entriesData) ? entriesData : [];
       description: entry.description,
       country: entry.location?.country || '',
       date: entry.date,
-      rating: entry.rating || 5, // מכינים דירוג 5 למקרה שנשנה ל'ביקרתי'
+      rating: entry.rating || 5, 
       status: entry.status,
       isPublic: entry.isPublic,
       location: entry.location,

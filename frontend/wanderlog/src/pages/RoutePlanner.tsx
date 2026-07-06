@@ -8,18 +8,15 @@ import { useSaveTripMutation, useUpdateTripMutation, useGetTripsQuery } from '..
 import ReactMarkdown from 'react-markdown';
 import { useNavigate, useParams } from 'react-router-dom';
 
-// ספריות הגרירה (Drag & Drop)
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-// אייקונים
+
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
-
-// ספריות המפה
 import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -80,7 +77,6 @@ export default function RoutePlanner() {
   const [loadedTripId, setLoadedTripId] = useState<string | null>(null);
   const [hasJustSaved, setHasJustSaved] = useState(false);
 
-  // מדינת הודעות קופצות (Snackbar)
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' | 'warning' });
 
   const handleCloseSnackbar = () => {
@@ -89,7 +85,6 @@ export default function RoutePlanner() {
 
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
 
-  // טעינת נתונים במצב עריכה
   useEffect(() => {
     if (isEditMode && allTrips && loadedTripId !== tripId && !hasJustSaved) {
       const tripToEdit = allTrips.find((t: any) => t.id === Number(tripId));
@@ -150,13 +145,11 @@ export default function RoutePlanner() {
 
       setSnackbar({ open: true, message: 'הטיול נשמר בהצלחה!', severity: 'success' });
 
-      // === איפוס הנתונים בסיום ===
       dispatch(clearRoute());
       setTripTitle("");
       setAiAdvice(null);
 
-      // התיקון החשוב: לא מאפסים כאן את loadedTripId ל-null!
-      // השארתו כפי שהוא מונעת מה-useEffect לרוץ שוב ולמשוך את המידע מחדש בשניות האחרונות.
+
 
       setTimeout(() => {
         navigate('/explore');
@@ -184,7 +177,6 @@ export default function RoutePlanner() {
     <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, minHeight: '85vh', p: 4, gap: 4, maxWidth: 1400, mx: 'auto' }}>
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>
 
-        {/* פאנל כפתורי פעולות חכמים */}
         <Paper elevation={3} sx={{ p: 3, borderRadius: 3, backgroundColor: '#fff', textAlign: 'center', borderTop: '4px solid #305031' }}>
           <Typography variant="h5" sx={{ mb: 1, fontWeight: 'bold', color: '#2E4835' }}>{isEditMode ? 'עריכת מסלול' : 'תכנון המסלול שלי'}</Typography>
           <Typography variant="body2" sx={{ mb: 3, color: '#666' }}>גררו את היעדים כדי לשנות את הסדר, או תנו לנו לסדר לכם מסלול חכם.</Typography>
@@ -214,7 +206,7 @@ export default function RoutePlanner() {
           </Box>
         </Paper>
 
-        {/* הצגת עצת ה-AI במידה וקיימת */}
+        {/* הצגת עצת ה-AI*/}
         {aiAdvice && (
           <Paper elevation={3} sx={{ p: 3, borderRadius: 3, backgroundColor: '#E8F5E9', border: '1px solid #C8E6C9' }}>
             <Typography variant="subtitle1" sx={{ color: '#2E4835', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -257,7 +249,6 @@ export default function RoutePlanner() {
         )}
       </Box>
 
-      {/* רכיב המפה עם קו מחבר Polyline */}
       <Box sx={{ flex: 1.5, borderRadius: '16px', overflow: 'hidden', boxShadow: '0px 4px 12px rgba(0,0,0,0.1)', minHeight: '600px', border: '4px solid #fff' }}>
         <MapContainer center={[48.8566, 2.3522]} zoom={5} style={{ height: '100%', width: '100%' }}>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
@@ -269,7 +260,6 @@ export default function RoutePlanner() {
         </MapContainer>
       </Box>
 
-      {/* הודעות קופצות מעוצבות - Snackbar */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}

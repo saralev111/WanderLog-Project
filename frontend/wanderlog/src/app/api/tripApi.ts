@@ -13,7 +13,7 @@ export const tripApi = createApi({
       return headers;
     },
   }),
-  // 1. הגדרת סוג התגית
+
   tagTypes: ['Trip'], 
   
   endpoints: (builder) => ({
@@ -24,7 +24,7 @@ export const tripApi = createApi({
         method: 'POST',
         body: tripData,
       }),
-      // 2. אחרי שהשמירה מצליחה, תפסול את התגית "Trip"
+
       invalidatesTags: ['Trip'], 
     }),
     updateTrip: builder.mutation<any, { id: number; title: string; journalEntryIds: number[] }>({
@@ -38,7 +38,6 @@ export const tripApi = createApi({
     
     getTrips: builder.query<any[], void>({
         query: () => '/all',
-        // 3. תייג את השליפה הזו תחת "Trip" כדי שנדע מתי לרענן אותה
         providesTags: ['Trip'], 
       }),
   }),

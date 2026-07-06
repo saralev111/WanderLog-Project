@@ -14,7 +14,6 @@ const DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
-// הוספנו לפה את האפשרות להחזיר מדינה ושם מקום!
 interface MapSelectorProps {
   onLocationSelect: (lat: number, lng: number, country: string, addressName: string) => void;
   defaultLat?: number;
@@ -48,7 +47,6 @@ function MapController({ center }: { center: [number, number] | null }) {
   return null;
 }
 
-// שדרוג: כשלוחצים על המפה, היא בודקת מול השרת איזו מדינה זו
 function LocationMarker({ onLocationSelect, position, setPosition }: LocationMarkerProps) {
   useMapEvents({
     async click(e) {
@@ -81,7 +79,6 @@ export default function MapSelector({ onLocationSelect, defaultLat, defaultLng }
   );
 
   useEffect(() => {
-    // בוטל האיפוס למרכז המפה פה כדי למנוע קפיצות כשיש default
     if (defaultLat !== undefined && defaultLng !== undefined) {
       setPosition({ lat: defaultLat, lng: defaultLng });
       setFlyCenter([defaultLat, defaultLng]);
